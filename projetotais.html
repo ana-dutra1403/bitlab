@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bit Lab — Monte seu PC (protótipo AR)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --asphalt:#141a22; --asphalt2:#1c2430; --panel:rgba(20,26,34,.92);
+  --line:rgba(214,226,240,.14); --txt:#e9eef5; --mut:#93a1b3;
+  --board:#f5c518; --wet:#4aa8ff; --ok:#36d399; --bad:#ff4f5e;
+  --display:"Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --body:"Barlow Semi Condensed", "Segoe UI", system-ui, sans-serif;
+  box-sizing:border-box;
+}
+:root:not([data-theme="light"]){color-scheme:dark}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --asphalt:#141a22; } }
+:root[data-theme="dark"]{ --asphalt:#141a22; }
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--asphalt);color:var(--txt);font-family:var(--body);font-size:17px;line-height:1.4;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--board);outline-offset:2px}
+
+#video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0}
+#stage{position:fixed;inset:0;z-index:1;touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+
+/* topo */
+header{position:fixed;left:0;right:0;top:0;z-index:5;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;display:flex;align-items:center;gap:14px;background:linear-gradient(to bottom,rgba(20,26,34,.95),rgba(20,26,34,0));pointer-events:none}
+header>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px}
+.brand b{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.02em}
+.brand span{color:var(--mut);font-size:15px;border-left:1px solid var(--line);padding-left:10px}
+.dots{display:flex;gap:6px;margin-left:auto;align-items:center}
+.dots i{width:22px;height:5px;border-radius:3px;background:rgba(255,255,255,.18)}
+.dots i.on{background:var(--board)}
+.dots i.done{background:var(--ok)}
+.mode{border:1px solid var(--line);background:rgba(20,26,34,.8);border-radius:20px;padding:5px 12px;font-size:15px}
+
+/* placa de box: o card das fases */
+#panel{position:fixed;z-index:4;right:16px;top:74px;width:360px;max-height:calc(100% - 96px - env(safe-area-inset-bottom,0px));overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 18px 18px;display:none;backdrop-filter:blur(8px)}
+#panel .board{margin:0 -18px 14px;background:var(--board);color:#1a1a1a;padding:10px 18px;border-radius:13px 13px 0 0;display:flex;align-items:baseline;gap:10px}
+#panel .board .n{font-family:var(--display);font-weight:700;font-size:30px;line-height:1}
+#panel .board h2{font-family:var(--display);font-weight:700;font-size:21px;margin:0}
+#panel p{margin:0 0 12px;color:#cdd6e2}
+.chip{display:inline-block;border-radius:6px;padding:3px 9px;font-size:15px;margin-bottom:12px}
+.chip.wet{background:rgba(74,168,255,.16);color:#9fd0ff;border:1px solid rgba(74,168,255,.4)}
+.opts{display:grid;gap:8px;margin-bottom:12px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;background:var(--asphalt2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.opt small{display:block;color:var(--mut);font-size:14px}
+.opt .tyre{width:30px;height:30px;border-radius:50%;background:#111;border:5px solid #222;box-shadow:inset 0 0 0 3px var(--c)}
+.opt.sel{border-color:var(--c);background:rgba(255,255,255,.05)}
+.bar{margin:6px 0 10px}
+.bar .l{display:flex;justify-content:space-between;font-size:15px;color:var(--mut)}
+.bar .t{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}
+.bar .f{height:100%;border-radius:4px;background:var(--wet);transition:width .5s}
+.fb{border-left:3px solid var(--mut);padding:6px 10px;margin:4px 0 12px;background:rgba(255,255,255,.04);font-size:16px}
+.fb.good{border-color:var(--ok)} .fb.badf{border-color:var(--bad)}
+.cta{display:block;width:100%;border:0;border-radius:10px;padding:12px;font-family:var(--display);font-weight:700;font-size:18px;background:var(--board);color:#1a1a1a;margin-top:6px}
+.cta:disabled{opacity:.35;cursor:not-allowed}
+.ghost{display:block;width:100%;border:1px solid var(--line);background:transparent;border-radius:10px;padding:10px;margin-top:8px;color:#cdd6e2}
+.cta.red{background:var(--bad);color:#fff}
+.cta.go{background:var(--ok)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--asphalt2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.switch{position:relative;width:52px;height:28px;flex:none}
+.switch input{opacity:0;width:100%;height:100%;margin:0;position:absolute;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:14px;background:rgba(255,255,255,.18);transition:.2s}
+.switch span::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.switch input:checked+span{background:var(--wet)}
+.switch input:checked+span::after{left:27px}
+input[type=range]{width:100%;accent-color:var(--board)}
+.angle{font-family:var(--display);font-size:28px;font-weight:700}
+.status{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;border:1px dashed var(--line);margin-bottom:10px;color:var(--mut)}
+.status.alert{border:1px solid var(--bad);color:#ffb3ba;background:rgba(255,79,94,.1)}
+.status.fixed{border:1px solid var(--ok);color:#a6f0cf;background:rgba(54,211,153,.1)}
+.prog{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0}
+.prog div{height:100%;width:0;background:var(--ok)}
+.check{list-style:none;padding:0;margin:0 0 12px}
+.check li{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--line)}
+.check li b{color:var(--ok)}
+
+/* info das peças */
+.check li.cur{color:var(--board)}
+.check li i{font-style:normal;color:var(--mut)}
+.qtable{width:100%;border-collapse:collapse;margin:0 0 12px;font-size:16px}
+.qtable td{padding:5px 2px;border-bottom:1px solid var(--line)}
+.qtable td:last-child{text-align:right}
+.qtable tr:last-child td{font-weight:600;color:var(--txt);border-bottom:0}
+.post{justify-self:center;font-family:var(--display);font-weight:700;font-size:44px;border:3px solid var(--ok);color:var(--ok);padding:22px 30px;border-radius:12px;transform:rotate(-4deg)}
+#info{position:fixed;z-index:4;left:16px;top:74px;width:290px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--board);border-radius:10px;padding:12px 14px;display:none}
+#info h3{font-family:var(--display);margin:0 0 4px;font-size:19px}
+#info p{margin:0;color:#cdd6e2;font-size:16px}
+#info button{position:absolute;right:8px;top:6px;background:none;border:0;font-size:20px;color:var(--mut)}
+
+#toast{position:fixed;z-index:9;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#222c38;border:1px solid var(--line);padding:9px 16px;border-radius:10px;display:none;max-width:90%;text-align:center}
+
+/* scanner do marcador */
+#scan{position:fixed;inset:0;z-index:6;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;pointer-events:none}
+#scan .ret{width:220px;height:220px;position:relative}
+#scan .ret::before,#scan .ret::after{content:"";position:absolute;inset:0;border:3px solid var(--board);clip-path:polygon(0 0,30% 0,30% 4px,4px 4px,4px 30%,0 30%,0 70%,4px 70%,4px calc(100% - 4px),30% calc(100% - 4px),30% 100%,70% 100%,70% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 70%,100% 70%,100% 30%,calc(100% - 4px) 30%,calc(100% - 4px) 4px,70% 4px,70% 0,100% 0,100% 100%,0 100%)}
+#scan .line{position:absolute;left:8px;right:8px;height:2px;background:var(--board);box-shadow:0 0 12px var(--board);animation:sc 1.2s ease-in-out infinite alternate}
+@keyframes sc{from{top:8px}to{top:210px}}
+#scan p{background:var(--panel);padding:8px 16px;border-radius:8px;margin:0;font-size:18px}
+
+/* telas cheias */
+.screen{position:fixed;inset:0;z-index:8;display:none;overflow:auto;background:radial-gradient(ellipse at 30% 20%,#243142,var(--asphalt) 70%);padding:calc(env(safe-area-inset-top,0px) + 24px) 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.screen .wrap{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center;min-height:100%}
+.screen h1{font-family:var(--display);font-size:clamp(40px,7vw,72px);line-height:.95;margin:0 0 12px;letter-spacing:-.01em}
+.screen h1 small{display:block;font-size:.38em;color:var(--board);letter-spacing:.02em;margin-top:10px}
+.screen p{color:#cdd6e2;max-width:48ch}
+.phone{justify-self:center;width:220px;height:420px;border-radius:34px;border:8px solid #0a0d12;background:#1a212b;box-shadow:0 30px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;position:relative}
+.phone::before{content:"";position:absolute;top:10px;width:70px;height:18px;border-radius:10px;background:#0a0d12}
+.qr{width:140px;height:140px;background:#fff;padding:10px;display:grid;grid-template-columns:repeat(11,1fr);gap:0;position:relative}
+.qr i{background:#111}
+.qr i.w{background:#fff}
+.phone .cap{color:var(--mut);font-size:15px;text-align:center;padding:0 16px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.actions .cta{width:auto;padding:12px 20px}
+.actions .ghost{width:auto;margin:0;padding:12px 20px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.note{font-size:14px;color:var(--mut);margin-top:16px}
+.learn{display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.learn ol{padding-left:20px;color:#cdd6e2}
+.stats{display:flex;gap:22px;margin:16px 0 4px;flex-wrap:wrap}
+.stats div{font-size:14px;color:var(--mut)}
+.stats b{display:block;font-family:var(--display);font-size:22px;color:var(--txt)}
+.flag{width:120px;height:80px;background:conic-gradient(#fff 25%,#111 0 50%,#fff 0 75%,#111 0) 0 0/40px 40px;border-radius:4px;transform:skewY(-6deg);justify-self:center}
+
+@media (max-width:760px){
+  .brand span{display:none}
+  .dots i{width:12px}
+  #panel{left:10px;right:10px;width:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));max-height:48%}
+  #info{left:10px;right:10px;width:auto;top:64px}
+  .screen .wrap{grid-template-columns:1fr;gap:24px}
+  .phone{width:180px;height:330px}
+  .qr{width:110px;height:110px}
+}
+@media (prefers-reduced-motion: reduce){ #scan .line{animation:none;top:50%} }
+</style>
+</head>
+<body>
+<video id="video" playsinline muted autoplay></video>
+<div id="stage"></div>
+
+<header>
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="6" y="6" width="16" height="16" rx="2" fill="#f5c518"/><rect x="10" y="10" width="8" height="8" fill="#141a22"/><g stroke="#f5c518" stroke-width="2"><path d="M10 1v5M14 1v5M18 1v5M10 22v5M14 22v5M18 22v5M1 10h5M1 14h5M1 18h5M22 10h5M22 14h5M22 18h5"/></g></svg>
+    <b>Bit Lab</b><span>Monte seu PC</span>
+  </div>
+  <div class="dots" id="dots" aria-label="Progresso"></div>
+  <button class="mode" id="modeBtn" style="display:none">Modo: 3D</button>
+</header>
+
+<aside id="panel" aria-live="polite"></aside>
+<div id="info" role="dialog"><button id="infoClose" aria-label="Fechar">×</button><h3></h3><p></p></div>
+<div id="toast"></div>
+<div id="scan"><div class="ret"><div class="line"></div></div><p id="scanTxt">Procurando o marcador…</p></div>
+
+<section class="screen" id="startScreen" style="display:block">
+  <div class="wrap">
+    <div>
+      <h1>Bit Lab<small>Monte seu PC em realidade aumentada</small></h1>
+      <p>Uma bancada com a placa-mãe e as peças aparece em 3D sobre a mesa. Escolha peças compatíveis, encaixe cada uma no lugar certo, ligue os cabos e veja o computador dar o primeiro boot.</p>
+      <div class="actions">
+        <button class="cta" id="startAR">Iniciar com câmera</button>
+        <button class="ghost" id="start3D">Iniciar sem câmera</button>
+      </div>
+      <p class="note">Protótipo acadêmico. O reconhecimento do marcador é simulado: a bancada é posicionada sobre a imagem da câmera.</p>
+    </div>
+    <div class="phone">
+      <div class="qr" id="qr" aria-hidden="true"></div>
+      <div class="cap">Aponte a câmera para o QR Code e abra o jogo no navegador</div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="endScreen">
+  <div class="wrap">
+    <div>
+      <h1>PC montado<small>Primeiro boot concluído</small></h1>
+      <p>Você montou um computador inteiro usando realidade aumentada: peças virtuais posicionadas sobre a mesa real.</p>
+      <div class="stats" id="stats"></div>
+      <div class="actions">
+        <button class="cta" id="again">Montar de novo</button>
+        <button class="ghost" id="learnBtn">Entenda mais</button>
+      </div>
+      <div class="learn" id="learn">
+        <p><strong>Como funciona:</strong> a câmera identifica um marcador (imagem ou QR Code) e calcula a posição e o ângulo dele. Os modelos 3D são desenhados exatamente ali e acompanham o movimento do celular.</p>
+        <p><strong>Aplicação em sala de aula:</strong></p>
+        <ol>
+          <li>Cada aluno monta um PC sem precisar de peças reais, que são caras e frágeis.</li>
+          <li>Errar não estraga nada: o jogo explica por que a peça não encaixa.</li>
+          <li>O professor pode trocar as peças para ensinar compatibilidade (soquete, tipo de memória, potência da fonte).</li>
+          <li>Funciona no navegador do celular, sem instalar aplicativo.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="post" aria-hidden="true">POST OK</div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PI=Math.PI, TOP=.1;
+
+/* ---------- estado ---------- */
+const STEPS=['Início','Bancada','Processador','Memória','Vídeo e SSD','Energia','Ligar','Fim'];
+const S={step:0,ar:false,sel:null,paste:false,placed:{},occ:{},cables:{},quiz:{},qsel:{},err:0,on:false,spawnT:-1,startTime:0,psuT:-1};
+
+/* ---------- QR decorativo ---------- */
+(function(){const q=$('#qr');let seed=7;const r=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+for(let y=0;y<11;y++)for(let x=0;x<11;x++){const i=document.createElement('i');
+const f=(x<3&&y<3)||(x>7&&y<3)||(x<3&&y>7);const center=(x==1&&y==1)||(x==9&&y==1)||(x==1&&y==9);
+if(f){if(!center&&!(x==0||y==0||x==2||y==2||x==10||y==10||x==8||y==8))i.className='w';if(center)i.className='';}
+else if(r()<.5)i.className='w';q.appendChild(i);}})();
+
+/* ---------- three.js ---------- */
+const stage=$('#stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const BG=new THREE.Color(0x141a22);
+scene.background=BG;scene.fog=new THREE.Fog(0x141a22,10,20);
+const camera=new THREE.PerspectiveCamera(42,1,.05,60);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.enablePan=false;
+controls.minDistance=2;controls.maxDistance=11;controls.maxPolarAngle=PI*.47;
+
+scene.add(new THREE.HemisphereLight(0xdfe8ff,0x2a2018,.8));
+const sun=new THREE.DirectionalLight(0xffffff,1.05);sun.position.set(3,8,4);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5});scene.add(sun);
+const rim=new THREE.DirectionalLight(0x9fd0ff,.4);rim.position.set(-5,3,-4);scene.add(rim);
+
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+const woodTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#5b3d27';g.fillRect(0,0,w,h);for(let i=0;i<90;i++){g.strokeStyle=`rgba(${30+Math.random()*40},${18+Math.random()*20},10,${.15+Math.random()*.25})`;g.lineWidth=1+Math.random()*3;const y=Math.random()*h;g.beginPath();g.moveTo(0,y);g.bezierCurveTo(w*.3,y+Math.random()*20-10,w*.7,y+Math.random()*20-10,w,y+Math.random()*10-5);g.stroke();}});
+woodTex.wrapS=woodTex.wrapT=THREE.RepeatWrapping;woodTex.repeat.set(2,2);
+const table=new THREE.Mesh(new THREE.BoxGeometry(9,.14,6),new THREE.MeshStandardMaterial({map:woodTex,roughness:.7}));
+table.position.set(.6,-.07,0);table.receiveShadow=true;scene.add(table);
+const markerTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#111';g.fillRect(0,0,w,h);g.fillStyle='#f4f4f4';g.fillRect(56,56,400,400);g.fillStyle='#111';
+let s=3;const r=()=>{s=(s*9301+49297)%233280;return s/233280};for(let y=0;y<8;y++)for(let x=0;x<8;x++)if(r()<.45)g.fillRect(96+x*40,96+y*40,40,40);
+g.fillStyle='#f5c518';g.fillRect(56,410,400,46);g.fillStyle='#111';g.font='bold 34px sans-serif';g.textAlign='center';g.fillText('BIT LAB',256,446);});
+const marker=new THREE.Mesh(new THREE.PlaneGeometry(3,3),new THREE.MeshStandardMaterial({map:markerTex,roughness:.9}));
+marker.rotation.x=-PI/2;marker.position.y=.002;marker.receiveShadow=true;scene.add(marker);
+const shadowPlane=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.ShadowMaterial({opacity:.4}));
+shadowPlane.rotation.x=-PI/2;shadowPlane.position.y=.001;shadowPlane.receiveShadow=true;shadowPlane.visible=false;scene.add(shadowPlane);
+
+/* ---------- materiais e utilitários ---------- */
+function M(c,m=.3,r=.5,extra={}){return new THREE.MeshStandardMaterial(Object.assign({color:c,metalness:m,roughness:r},extra));}
+const MAT={pcb:M(0x16302a,.2,.6),black:M(0x15181e,.3,.55),steel:M(0xc4ccd6,.85,.28),alu:M(0xaab3bf,.8,.35),copper:M(0xb8733f,.9,.3),
+  gold:M(0xc9a640,.9,.3),dark:M(0x262b33,.5,.45),yellow:M(0xf5c518,.3,.4),cpuSub:M(0x2a6b3a,.2,.5),grey:M(0x6f7a8a,.7,.35),
+  paste:M(0x9aa0a8,.2,.8),cable:M(0x1b1f27,.2,.7),mat:M(0x22262d,0,.95)};
+const ledMat=M(0x111111,.1,.4,{emissive:0xf5c518,emissiveIntensity:0});
+const box=(x,y,z)=>new THREE.BoxGeometry(x,y,z);
+function add(parent,geo,mat,pos,info){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);m.castShadow=true;m.receiveShadow=true;if(info)m.userData.info=info;parent.add(m);return m;}
+
+const rig=new THREE.Group();rig.visible=false;scene.add(rig);
+/* tapete da bandeja de peças */
+add(rig,box(1.85,.006,3.1),MAT.mat,[2.33,.003,.1]);
+
+/* ---------- placa-mãe ---------- */
+add(rig,box(2.4,.04,2.6),MAT.pcb,[0,TOP-.02,0],'board');
+[[-1.1,-1.2],[1.1,-1.2],[-1.1,1.2],[1.1,1.2]].forEach(([x,z])=>add(rig,new THREE.CylinderGeometry(.03,.03,.06,10),MAT.gold,[x,.03,z]));
+const W=1024,H=1110,toC=(x,z)=>[(x+1.2)/2.4*W,(z+1.3)/2.6*H];
+const pcbTex=canvasTex(W,H,(g)=>{
+  g.fillStyle='#16302a';g.fillRect(0,0,W,H);
+  g.strokeStyle='rgba(110,190,155,.22)';g.lineWidth=3;
+  for(let i=0;i<160;i++){let x=Math.random()*W,y=Math.random()*H;g.beginPath();g.moveTo(x,y);const h=Math.random()<.5;x+=h?(Math.random()-.5)*300:0;y+=h?0:(Math.random()-.5)*300;g.lineTo(x,y);g.lineTo(x+(Math.random()-.5)*60,y+(Math.random()-.5)*60);g.stroke();}
+  g.fillStyle='rgba(236,240,235,.9)';g.textAlign='center';g.font='bold 22px sans-serif';
+  const T=(t,x,z,size)=>{if(size)g.font=`bold ${size}px sans-serif`;const [cx,cy]=toC(x,z);g.fillText(t,cx,cy);g.font='bold 22px sans-serif';};
+  T('A1',.45,.34);T('A2',.57,.34);T('B1',.69,.34);T('B2',.81,.34);T('DDR5',.63,-1.12);
+  T('SOCKET S5',-.2,-.16);T('PCIE_X16',-.35,.66);T('PCIE_X1',-.85,1.06);T('M.2',-.86,.17);
+  T('CPU_PWR',-.85,-1.06);T('ATX_24P',1.0,.12);T('BL-S5 PRO',.55,1.2,34);
+  g.strokeStyle='rgba(236,240,235,.7)';g.lineWidth=2;const [sx,sy]=toC(-.53,-.83),[ex,ey]=toC(.13,-.17);g.strokeRect(sx,sy,ex-sx,ey-sy);
+});
+const silk=new THREE.Mesh(new THREE.PlaneGeometry(2.4,2.6),new THREE.MeshStandardMaterial({map:pcbTex,roughness:.6,metalness:.1}));
+silk.rotation.x=-PI/2;silk.position.y=TOP+.001;silk.receiveShadow=true;silk.userData.info='board';rig.add(silk);
+/* soquete */
+add(rig,box(.5,.03,.5),MAT.steel,[-.2,TOP+.015,-.5],'socket');
+add(rig,box(.4,.031,.4),M(0x8a7a40,.8,.4),[-.2,TOP+.016,-.5],'socket');
+const lever=add(rig,new THREE.CylinderGeometry(.012,.012,.5,8),MAT.steel,[.08,TOP+.035,-.5],'socket');lever.rotation.x=PI/2;
+add(rig,box(.6,.12,.15),MAT.dark,[-.2,TOP+.06,-1.0],'vrm');add(rig,box(.15,.12,.6),MAT.dark,[-.62,TOP+.06,-.5],'vrm');
+for(let i=0;i<6;i++)add(rig,new THREE.CylinderGeometry(.025,.025,.06,10),MAT.alu,[-.45+i*.1,TOP+.03,-.83],'board');
+/* slots */
+const RAMX={A1:.45,A2:.57,B1:.69,B2:.81};
+Object.values(RAMX).forEach(x=>{add(rig,box(.05,.05,1.3),MAT.black,[x,TOP+.025,-.4],'ramslot');add(rig,box(.05,.07,.04),MAT.grey,[x,TOP+.035,.27],'ramslot');add(rig,box(.05,.07,.04),MAT.grey,[x,TOP+.035,-1.07],'ramslot');});
+add(rig,box(.04,.04,.12),MAT.black,[-.77,TOP+.02,.15],'m2');add(rig,new THREE.CylinderGeometry(.015,.015,.03,8),MAT.gold,[-.24,TOP+.015,.15],'m2');
+add(rig,box(1.0,.05,.06),MAT.black,[-.35,TOP+.025,.55],'x16');add(rig,box(1.02,.052,.07),M(0xc4ccd6,.85,.28,{transparent:true,opacity:.5}),[-.35,TOP+.025,.55],'x16');
+add(rig,box(.3,.05,.06),MAT.black,[-.85,TOP+.025,.95],'x1');
+add(rig,box(.08,.08,.45),MAT.black,[1.12,TOP+.04,-.2],'p24');
+add(rig,box(.28,.08,.08),MAT.black,[-.85,TOP+.04,-1.18],'cpu8');
+add(rig,box(.22,.28,1.0),MAT.grey,[-1.08,TOP+.14,-.55],'io');
+add(rig,box(.4,.06,.4),MAT.dark,[.7,TOP+.03,.95],'chipset');add(rig,box(.4,.005,.04),MAT.yellow,[.7,TOP+.063,.85],'chipset');
+add(rig,new THREE.CylinderGeometry(.07,.07,.015,20),MAT.steel,[.25,TOP+.008,1.0],'cmos');
+
+/* ---------- monitor ---------- */
+const monitor=new THREE.Group();monitor.position.set(.2,0,-2.15);rig.add(monitor);
+add(monitor,box(.55,.03,.3),MAT.dark,[0,.015,0],'monitor');add(monitor,box(.07,.55,.06),MAT.dark,[0,.3,-.02],'monitor');
+add(monitor,box(1.95,1.15,.06),MAT.black,[0,1.05,0],'monitor');
+const scrCanvas=document.createElement('canvas');scrCanvas.width=960;scrCanvas.height=530;const scr=scrCanvas.getContext('2d');
+const scrTex=new THREE.CanvasTexture(scrCanvas);scrTex.encoding=THREE.sRGBEncoding;
+const screenMat=new THREE.MeshBasicMaterial({map:scrTex,toneMapped:false});
+const screen=add(monitor,new THREE.PlaneGeometry(1.85,1.03),screenMat,[0,1.05,.031],'monitor');screen.castShadow=false;
+function drawScreen(lines){scr.fillStyle='#000';scr.fillRect(0,0,960,530);
+  if(!lines){const g=scr.createLinearGradient(0,0,960,530);g.addColorStop(0,'rgba(255,255,255,.06)');g.addColorStop(.5,'rgba(255,255,255,0)');scr.fillStyle=g;scr.fillRect(0,0,960,530);scrTex.needsUpdate=true;return;}
+  scr.font='bold 30px monospace';lines.forEach((l,i)=>{scr.fillStyle=l.c||'#d8e1ec';scr.fillText(l.t,40,60+i*42);});scrTex.needsUpdate=true;}
+drawScreen(null);
+
+/* ---------- peças (itens da bandeja) ---------- */
+const ITEMS={};
+function item(id,info,trayPos,trayRot){const g=new THREE.Group();g.userData.item=id;g.userData.info=info;rig.add(g);
+  g.position.set(...trayPos);g.rotation.set(...trayRot);ITEMS[id]={obj:g,trayPos,trayRot};return g;}
+/* processador */
+const cpu=item('cpu','cpu',[1.75,.03,-.95],[0,0,0]);
+add(cpu,box(.4,.02,.4),MAT.cpuSub,[0,-.01,0]);add(cpu,box(.32,.022,.32),MAT.steel,[0,.011,0]);
+add(cpu,new THREE.CylinderGeometry(.025,.025,.003,3),MAT.gold,[-.17,.002,.17]);
+/* cooler */
+const cooler=item('cooler','cooler',[2.6,0,-.95],[0,0,0]);
+add(cooler,box(.4,.04,.4),MAT.copper,[0,.02,0]);
+for(let i=0;i<12;i++)add(cooler,box(.6,.2,.015),MAT.alu,[0,.14,-.275+i*.05]);
+add(cooler,new THREE.CylinderGeometry(.29,.29,.05,32),MAT.dark,[0,.265,0]);
+const coolerFan=new THREE.Group();coolerFan.position.y=.3;cooler.add(coolerFan);
+add(coolerFan,new THREE.CylinderGeometry(.07,.07,.03,16),MAT.yellow,[0,0,0]);
+for(let i=0;i<7;i++){const b=add(coolerFan,box(.19,.008,.08),MAT.black,[0,0,0]);const a=i/7*PI*2;b.position.set(Math.cos(a)*.15,0,Math.sin(a)*.15);b.rotation.y=-a;b.rotation.x=.4;}
+/* memórias */
+function ram(id,pos){const g=item(id,'ram',pos,[0,0,PI/2]);
+  add(g,box(.02,.3,1.25),MAT.cpuSub,[0,0,0]);add(g,box(.036,.25,1.2),MAT.dark,[0,.015,0]);add(g,box(.037,.03,1.0),MAT.yellow,[0,.02,0]);
+  add(g,box(.03,.025,1.18),ledMat,[0,.15,0]);return g;}
+ram('ram1',[1.8,.02,.15]);ram('ram2',[2.2,.02,.15]);
+/* ssd */
+const ssd=item('ssd','ssd',[2.85,.01,.15],[0,PI/2,0]);
+add(ssd,box(.5,.016,.11),MAT.black,[0,0,0]);add(ssd,box(.12,.01,.08),MAT.dark,[-.08,.012,0]);add(ssd,box(.12,.01,.08),MAT.dark,[.1,.012,0]);add(ssd,box(.06,.002,.11),MAT.gold,[-.23,.009,0]);
+/* placa de vídeo */
+const gpu=item('gpu','gpu',[2.35,.13,1.15],[-PI/2,0,0]);
+add(gpu,box(1.5,.55,.03),MAT.black,[0,0,-.1]);add(gpu,box(1.46,.5,.17),MAT.dark,[0,0,0]);
+add(gpu,box(1.3,.03,.172),MAT.yellow,[0,-.2,0]);add(gpu,box(.03,.6,.24),MAT.steel,[-.77,0,-.03]);
+add(gpu,box(.6,.06,.02),MAT.gold,[-.3,-.3,-.1]);add(gpu,box(1.2,.015,.05),ledMat,[0,.255,0]);
+add(gpu,box(.16,.04,.07),MAT.black,[.55,.285,-.02]);
+const gpuFans=[-.35,.35].map(x=>{const f=new THREE.Group();f.position.set(x,.01,.09);gpu.add(f);
+  add(f,new THREE.TorusGeometry(.22,.015,8,32),MAT.black,[0,0,0]);const hub=add(f,new THREE.CylinderGeometry(.06,.06,.02,16),MAT.yellow,[0,0,0]);hub.rotation.x=PI/2;
+  for(let i=0;i<9;i++){const b=add(f,box(.15,.06,.008),MAT.black,[0,0,0]);const a=i/9*PI*2;b.position.set(Math.cos(a)*.13,Math.sin(a)*.13,0);b.rotation.z=a;b.rotation.x=.4;}return f;});
+/* fonte */
+const psu=new THREE.Group();psu.position.set(.5,0,2.1);psu.visible=false;psu.userData.info='psu';rig.add(psu);
+add(psu,box(1.0,.46,.85),MAT.black,[0,.23,0]);
+add(psu,new THREE.TorusGeometry(.3,.02,8,40),MAT.grey,[0,.462,.05]).rotation.x=PI/2;
+const psuLabel=canvasTex(256,128,(g)=>{g.fillStyle='#f5c518';g.fillRect(0,0,256,128);g.fillStyle='#111';g.font='bold 54px sans-serif';g.textAlign='center';g.fillText('650 W',128,80);g.font='bold 20px sans-serif';g.fillText('80 PLUS',128,112);});
+const lab=add(psu,new THREE.PlaneGeometry(.45,.22),new THREE.MeshStandardMaterial({map:psuLabel,roughness:.6}),[0,.23,.426]);
+
+/* posições de encaixe */
+const TARGET={cpu:[-.2,TOP+.05,-.5],cooler:[-.2,TOP+.07,-.5],ssd:[-.5,TOP+.03,.15],gpu:[-.05,TOP+.325,.65]};
+const pasteMesh=add(rig,new THREE.CylinderGeometry(.07,.07,.006,20),MAT.paste,[-.2,TOP+.073,-.5]);pasteMesh.visible=false;
+
+/* áreas destacadas (onde tocar) */
+const haloMat=new THREE.MeshBasicMaterial({color:0xf5c518,transparent:true,opacity:.35,depthWrite:false});
+const SLOTS={socket:[[-.2,TOP+.05,-.5],[.62,.1,.62]],A1:[[RAMX.A1,TOP+.06,-.4],[.09,.12,1.36]],A2:[[RAMX.A2,TOP+.06,-.4],[.09,.12,1.36]],
+  B1:[[RAMX.B1,TOP+.06,-.4],[.09,.12,1.36]],B2:[[RAMX.B2,TOP+.06,-.4],[.09,.12,1.36]],m2:[[-.5,TOP+.03,.15],[.6,.05,.18]],
+  x16:[[-.35,TOP+.04,.55],[1.1,.08,.12]],x1:[[-.85,TOP+.04,.95],[.38,.08,.12]],p24:[[1.12,TOP+.06,-.2],[.16,.14,.55]],
+  cpu8:[[-.85,TOP+.06,-1.18],[.36,.14,.16]],gpu8:[[.5,TOP+.62,.63],[.24,.1,.14]]};
+const halos={};Object.entries(SLOTS).forEach(([k,[p,s]])=>{const h=new THREE.Mesh(box(...s),haloMat);h.position.set(...p);h.visible=false;h.userData.slot=k;rig.add(h);halos[k]=h;});
+
+/* ---------- textos das peças ---------- */
+const INFO={
+  board:['Placa-mãe','Conecta todas as peças do computador e faz elas conversarem entre si.'],
+  socket:['Soquete do processador','Onde o processador encaixa. Cada placa aceita um único tipo de soquete, aqui o S5.'],
+  vrm:['Dissipadores do VRM','Resfriam os circuitos que regulam a energia entregue ao processador.'],
+  ramslot:['Slots de memória','Recebem os pentes de RAM. A ordem dos slots importa: o manual da placa indica quais usar.'],
+  m2:['Slot M.2','Conector para SSDs pequenos e muito rápidos, que ficam deitados sobre a placa.'],
+  x16:['Slot PCIe x16','O slot mais longo e reforçado, feito para a placa de vídeo.'],
+  x1:['Slot PCIe x1','Slot curto para placas menores, como Wi-Fi ou som.'],
+  p24:['Conector de 24 pinos','Principal entrada de energia da placa-mãe.'],
+  cpu8:['Conector de 8 pinos (CPU)','Energia extra dedicada ao processador.'],
+  io:['Painel traseiro','Portas USB, rede, áudio e vídeo que ficam na traseira do gabinete.'],
+  chipset:['Chipset','Controla a comunicação entre processador, armazenamento e portas USB.'],
+  cmos:['Bateria CMOS','Guarda a data, a hora e as configurações da BIOS com o PC desligado.'],
+  monitor:['Monitor','Mostra se o PC ligou corretamente no primeiro boot.'],
+  cpu:['Processador (CPU)','O cérebro do computador: executa as instruções dos programas.'],
+  cooler:['Cooler','Retira o calor do processador. A pasta térmica preenche as microfolgas entre os dois.'],
+  ram:['Memória RAM','Guarda temporariamente os dados que os programas estão usando agora.'],
+  ssd:['SSD M.2','Armazena o sistema e os arquivos, mesmo com o PC desligado.'],
+  gpu:['Placa de vídeo (GPU)','Gera as imagens enviadas ao monitor. Precisa de energia extra da fonte.'],
+  psu:['Fonte de alimentação','Converte a energia da tomada nas tensões que as peças usam.']
+};
+function showInfo(k){const d=INFO[k];if(!d)return;$('#info h3').textContent=d[0];$('#info p').textContent=d[1];$('#info').style.display='block';}
+$('#infoClose').onclick=()=>$('#info').style.display='none';
+
+/* ---------- animação de encaixe ---------- */
+const anims=[];
+function moveTo(obj,pos,rot,dur=.8){const q1=new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot));
+  anims.push({obj,p0:obj.position.clone(),p1:new THREE.Vector3(...pos),q0:obj.quaternion.clone(),q1,t:0,dur:reduceMotion?.01:dur});}
+
+/* ---------- regras do jogo ---------- */
+function selectable(id){
+  if(S.step===2){if(id==='cpu')return S.quiz.cpu&&!S.placed.cpu;if(id==='cooler')return S.placed.cpu&&S.paste&&!S.placed.cooler;}
+  if(S.step===3&&(id==='ram1'||id==='ram2'))return S.quiz.ram&&!S.placed[id];
+  if(S.step===4&&(id==='ssd'||id==='gpu'))return !S.placed[id];
+  return false;
+}
+function why(id){
+  if(S.step===2&&id==='cooler'&&!S.placed.cpu)return 'Primeiro encaixe o processador.';
+  if(S.step===2&&id==='cooler'&&!S.paste)return 'Aplique a pasta térmica antes do cooler.';
+  if(S.step===2&&id==='cpu'&&!S.quiz.cpu)return 'Responda à pergunta do painel primeiro.';
+  if(S.step===3&&id.startsWith('ram')&&!S.quiz.ram)return 'Responda à pergunta do painel primeiro.';
+  return null;
+}
+function select(id){
+  if(S.sel&&S.sel!==id)drop();
+  S.sel=id;const o=ITEMS[id].obj;o.userData.base=o.position.y;
+  toast('Agora toque na área destacada da placa-mãe.');updateHalos();render();
+}
+function drop(){if(!S.sel)return;const o=ITEMS[S.sel].obj;if(o.userData.base!=null)o.position.y=o.userData.base;o.userData.base=null;S.sel=null;updateHalos();}
+function updateHalos(){
+  Object.values(halos).forEach(h=>h.visible=false);
+  const show=k=>halos[k].visible=true;
+  if(S.sel==='cpu'||S.sel==='cooler')show('socket');
+  if(S.sel&&S.sel.startsWith('ram'))['A1','A2','B1','B2'].forEach(k=>{if(!S.occ[k])show(k)});
+  if(S.sel==='ssd')show('m2');
+  if(S.sel==='gpu'){show('x16');show('x1');}
+  if(S.step===5&&S.quiz.psu)['p24','cpu8','gpu8'].forEach(k=>{if(!S.cables[k])show(k)});
+}
+function place(id,pos,slot){const o=ITEMS[id].obj;o.userData.base=null;moveTo(o,pos,[0,0,0]);S.placed[id]=true;if(slot)S.occ[slot]=true;S.sel=null;updateHalos();render();}
+function slotTap(k){
+  if(['p24','cpu8','gpu8'].includes(k)){connect(k);return;}
+  const id=S.sel;if(!id)return;
+  if(id==='cpu'&&k==='socket'){place('cpu',TARGET.cpu);toast('Processador encaixado. Ele só entra em uma posição: repare no triângulo dourado.');return;}
+  if(id==='cooler'&&k==='socket'){place('cooler',TARGET.cooler);toast('Cooler instalado.');return;}
+  if(id.startsWith('ram')){
+    if(k==='A2'||k==='B2'){place(id,[RAMX[k],TOP+.2,-.4],k);toast(`Pente encaixado no slot ${k}.`);}
+    else{S.err++;toast('Assim a memória funciona em single channel, mais lenta. Com 2 pentes, use A2 e B2 (2º e 4º slots a partir do processador).',4500);}
+    return;}
+  if(id==='ssd'&&k==='m2'){place('ssd',TARGET.ssd);toast('SSD encaixado e preso no parafuso.');return;}
+  if(id==='gpu'){
+    if(k==='x16'){place('gpu',TARGET.gpu);toast('Placa de vídeo encaixada no slot PCIe x16.');}
+    else{S.err++;toast('Esse é um slot PCIe x1: curto demais para a placa de vídeo. Use o slot mais longo.',4000);}
+  }
+}
+/* cabos */
+const CABLE_PATH={
+  p24:[[.75,.46,1.8],[.95,.8,1.4],[1.35,.55,.5],[1.2,.4,-.2],[1.12,TOP+.1,-.2]],
+  cpu8:[[.3,.46,1.8],[.1,.9,1.5],[-1.45,.75,.3],[-1.15,.55,-1.2],[-.85,TOP+.1,-1.18]],
+  gpu8:[[.55,.46,1.75],[.6,.9,1.3],[.5,1.0,.65],[.5,TOP+.67,.63]]
+};
+const cableMeshes=[];
+function connect(k){if(S.cables[k])return;S.cables[k]=true;
+  const pts=CABLE_PATH[k].map(p=>new THREE.Vector3(...p));const c=new THREE.CatmullRomCurve3(pts);
+  const tube=add(rig,new THREE.TubeGeometry(c,48,.032,10,false),MAT.cable,[0,0,0],'psu');
+  const end=pts[pts.length-1];const plug=add(rig,box(.12,.06,.12),MAT.black,[end.x,end.y,end.z],'psu');
+  cableMeshes.push(tube,plug);
+  toast({p24:'Cabo de 24 pinos conectado à placa-mãe.',cpu8:'Cabo de 8 pinos conectado ao processador.',gpu8:'Cabo PCIe conectado à placa de vídeo.'}[k]);
+  updateHalos();render();}
+
+/* ---------- toque na cena ---------- */
+const ray=new THREE.Raycaster();const ptr=new THREE.Vector2();let downPos=null;
+function visibleChain(o){while(o){if(!o.visible)return false;o=o.parent;}return true;}
+function tagOf(o){while(o&&o!==rig){if(o.userData.slot||o.userData.item||o.userData.info)return o.userData;o=o.parent;}return null;}
+renderer.domElement.addEventListener('pointerdown',e=>{downPos=[e.clientX,e.clientY]});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!downPos||Math.hypot(e.clientX-downPos[0],e.clientY-downPos[1])>7||!rig.visible||S.step<1||S.step>6)return;
+  const r=renderer.domElement.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(ptr,camera);
+  const hits=ray.intersectObjects(rig.children,true);
+  for(const h of hits){if(!visibleChain(h.object))continue;const ud=tagOf(h.object);if(!ud)continue;
+    if(ud.slot){slotTap(ud.slot);return;}
+    if(ud.item){showInfo(ud.info);if(selectable(ud.item))select(ud.item);else{const w=why(ud.item);if(w)toast(w);}return;}
+    if(ud.info){showInfo(ud.info);return;}}
+});
+
+/* ---------- câmera do celular ---------- */
+const video=$('#video');
+async function startCamera(){try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});video.srcObject=st;await video.play();return true;}catch(e){return false;}}
+function setAR(on){S.ar=on;video.style.display=on?'block':'none';scene.background=on?null:BG;scene.fog=on?null:new THREE.Fog(0x141a22,10,20);
+  table.visible=!on;marker.visible=!on;shadowPlane.visible=on;$('#modeBtn').textContent=on?'Modo: câmera':'Modo: 3D';}
+$('#modeBtn').onclick=async()=>{if(S.ar){setAR(false);return;}if(video.srcObject||await startCamera())setAR(true);else toast('A câmera não está disponível aqui. Abra o link no celular e permita o acesso.');};
+
+/* ---------- painel ---------- */
+const panel=$('#panel');
+function toast(t,ms=3000){const el=$('#toast');el.textContent=t;el.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>el.style.display='none',ms);}
+function dots(){$('#dots').innerHTML=STEPS.map((s,i)=>`<i class="${i<S.step?'done':i===S.step?'on':''}" title="${s}"></i>`).join('');}
+function board(n,title){return `<div class="board"><span class="n">${n}</span><h2>${title}</h2></div>`;}
+function quiz(key,q,opts){const sel=S.qsel[key];const o=opts.find(x=>x.k===sel);
+  return `<p>${q}</p><div class="opts">${opts.map(x=>`<button class="opt ${sel===x.k?'sel':''}" data-q="${key}" data-k="${x.k}" data-ok="${x.ok?1:0}" style="--c:${x.ok?'#36d399':sel===x.k?'#ff4f5e':'#93a1b3'}"><span>${x.t}<small>${x.sub||''}</small></span></button>`).join('')}</div>
+  ${o?`<div class="fb ${o.ok?'good':'badf'}">${o.fb}</div>`:''}`;}
+function bindQuiz(){panel.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const k=b.dataset.q;S.qsel[k]=b.dataset.k;
+  if(b.dataset.ok==='1'){S.quiz[k]=true;if(k==='psu'){psu.visible=true;S.psuT=0;}}else S.err++;updateHalos();render();});}
+function checklist(items){return `<ul class="check">${items.map(([t,done,cur])=>`<li class="${!done&&cur?'cur':''}">${t}${done?'<b>OK</b>':'<i>pendente</i>'}</li>`).join('')}</ul>`;}
+function pickBtn(id,label){return `<button class="ghost" data-pick="${id}">${S.sel===id?'Segurando: toque na placa-mãe':label}</button>`;}
+function bindPick(){panel.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const id=b.dataset.pick;showInfo(ITEMS[id].obj.userData.info);select(id);});}
+
+function render(){
+  dots();panel.style.display=S.step>=1&&S.step<=6?'block':'none';let h='';
+  if(S.step===1){
+    h=board(1,'Bancada na mesa')+`<p>O marcador foi reconhecido. A placa-mãe está no centro e as peças estão na bandeja ao lado.</p>
+    <p>Arraste para girar, use dois dedos para aproximar e toque em qualquer peça para saber o que ela é.</p>
+    <button class="cta" id="next">Começar a montagem</button>`;
+  }
+  if(S.step===2){
+    h=board(2,'Processador');
+    if(!S.quiz.cpu)h+=quiz('cpu','A placa-mãe tem soquete S5 e usa memória DDR5. Qual processador encaixa nela?',[
+      {k:'a',t:'Processador A',sub:'Soquete S4',fb:'O soquete S4 tem outro formato de pinos. Ele não encaixa na placa S5.'},
+      {k:'b',t:'Processador B',sub:'Soquete S5',ok:true,fb:'Isso! Processador e placa-mãe precisam ter o mesmo soquete.'},
+      {k:'c',t:'Processador C',sub:'Soldado em placa de notebook',fb:'Processadores de notebook vêm soldados na placa e não podem ser trocados.'}]);
+    else{h+=`<div class="fb good">Processador B, soquete S5: compatível com a placa-mãe.</div>`+
+      checklist([['Encaixar o processador no soquete',S.placed.cpu,true],['Aplicar pasta térmica',S.paste,S.placed.cpu],['Instalar o cooler',S.placed.cooler,S.paste]]);
+      if(!S.placed.cpu)h+=pickBtn('cpu','Pegar o processador');
+      else if(!S.paste)h+=`<button class="ghost" id="paste">Aplicar pasta térmica</button>`;
+      else if(!S.placed.cooler)h+=pickBtn('cooler','Pegar o cooler');}
+    h+=`<button class="cta" id="next" ${S.placed.cooler?'':'disabled'}>Próxima fase</button>`;
+  }
+  if(S.step===3){
+    h=board(3,'Memória RAM');
+    if(!S.quiz.ram)h+=quiz('ram','Qual memória você deve usar nesta placa-mãe?',[
+      {k:'a',t:'DDR4',sub:'Geração anterior',fb:'A DDR4 tem o chanfro em outra posição e fisicamente não encaixa num slot DDR5.'},
+      {k:'b',t:'DDR5',sub:'Geração atual',ok:true,fb:'Certo! O tipo de memória precisa ser o que a placa suporta, aqui DDR5.'},
+      {k:'c',t:'Qualquer uma',sub:'Todas encaixam',fb:'Cada geração tem um encaixe diferente. Confira sempre a placa-mãe.'}]);
+    else{h+=`<p>Encaixe os dois pentes de DDR5. Atenção: a escolha dos slots muda o desempenho.</p>`+
+      checklist([['Encaixar o pente 1',S.placed.ram1,true],['Encaixar o pente 2',S.placed.ram2,true]]);
+      if(!S.placed.ram1)h+=pickBtn('ram1','Pegar o pente 1');if(!S.placed.ram2)h+=pickBtn('ram2','Pegar o pente 2');}
+    h+=`<button class="cta" id="next" ${S.placed.ram1&&S.placed.ram2?'':'disabled'}>Próxima fase</button>`;
+  }
+  if(S.step===4){
+    h=board(4,'Vídeo e armazenamento')+`<p>Instale o SSD no slot M.2 e a placa de vídeo no slot certo.</p>`+
+      checklist([['Instalar o SSD M.2',S.placed.ssd,true],['Instalar a placa de vídeo',S.placed.gpu,true]]);
+    if(!S.placed.ssd)h+=pickBtn('ssd','Pegar o SSD');if(!S.placed.gpu)h+=pickBtn('gpu','Pegar a placa de vídeo');
+    h+=`<button class="cta" id="next" ${S.placed.ssd&&S.placed.gpu?'':'disabled'}>Próxima fase</button>`;
+  }
+  if(S.step===5){
+    h=board(5,'Energia');
+    if(!S.quiz.psu)h+=`<p>Veja o consumo das peças e escolha a fonte.</p><table class="qtable"><tr><td>Processador</td><td>125 W</td></tr><tr><td>Placa de vídeo</td><td>220 W</td></tr><tr><td>Demais peças</td><td>75 W</td></tr><tr><td>Total</td><td>420 W</td></tr></table>`+
+      quiz('psu','Qual fonte escolher?',[
+      {k:'a',t:'350 W',sub:'Mais barata',fb:'Menos que o consumo total: o PC desligaria sozinho durante um jogo.'},
+      {k:'b',t:'650 W',sub:'Folga de cerca de 50%',ok:true,fb:'Ideal! A folga protege contra picos de consumo e permite upgrades.'},
+      {k:'c',t:'1600 W',sub:'A mais potente',fb:'Funciona, mas é cara e trabalha longe da faixa de melhor eficiência.'}]).replace('<p>Qual fonte escolher?</p>','<p><strong>Qual fonte escolher?</strong></p>');
+    else h+=`<p>A fonte de 650 W foi posicionada. Toque nos conectores destacados para ligar os cabos.</p>`+
+      checklist([['Cabo de 24 pinos na placa-mãe',S.cables.p24,true],['Cabo de 8 pinos do processador',S.cables.cpu8,true],['Cabo PCIe da placa de vídeo',S.cables.gpu8,true]]);
+    h+=`<button class="cta" id="next" ${S.cables.p24&&S.cables.cpu8&&S.cables.gpu8?'':'disabled'}>Próxima etapa</button>`;
+  }
+  if(S.step===6){
+    h=board(6,'Ligar o PC')+`<p>Tudo encaixado. Hora do primeiro boot.</p>`+
+      checklist([['Processador e cooler',1],['Memória em dual channel',1],['SSD e placa de vídeo',1],['Cabos de energia',1]])+
+      `<button class="cta go" id="power" ${S.on?'disabled':''}>${S.on?'Iniciando…':'Ligar o PC'}</button>`;
+  }
+  panel.innerHTML=h;bindQuiz();bindPick();
+  const nx=$('#next');if(nx)nx.onclick=()=>go(S.step+1);
+  const pa=$('#paste');if(pa)pa.onclick=()=>{S.paste=true;pasteMesh.visible=true;toast('Pasta térmica aplicada: uma gota do tamanho de um grão de ervilha.');render();};
+  const pw=$('#power');if(pw)pw.onclick=powerOn;
+}
+function powerOn(){S.on=true;render();
+  const L=[{t:'BL-S5 PRO  BIOS v1.0'},{t:'Processador B ......... OK',c:'#36d399'},{t:'Memória 2x DDR5 dual channel ... OK',c:'#36d399'},
+    {t:'SSD M.2 ............... OK',c:'#36d399'},{t:'Placa de vídeo PCIe x16 ... OK',c:'#36d399'},{t:''},{t:'Iniciando o sistema…',c:'#f5c518'}];
+  L.forEach((_,i)=>setTimeout(()=>drawScreen(L.slice(0,i+1)),300+i*450));
+  setTimeout(()=>go(7),300+L.length*450+1400);}
+
+function go(n){
+  drop();S.step=n;$('#info').style.display='none';updateHalos();
+  if(n===7){const secs=Math.round((performance.now()-S.startTime)/1000);
+    $('#stats').innerHTML=`<div><b>${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}</b>Tempo de montagem</div><div><b>${S.err}</b>Erros</div><div><b>7</b>Peças instaladas</div>`;
+    $('#endScreen').style.display='block';$('#modeBtn').style.display='none';}
+  render();
+}
+
+/* ---------- início e reinício ---------- */
+function resetGame(){
+  Object.assign(S,{sel:null,paste:false,placed:{},occ:{},cables:{},quiz:{},qsel:{},err:0,on:false,psuT:-1});
+  Object.values(ITEMS).forEach(it=>{it.obj.position.set(...it.trayPos);it.obj.rotation.set(...it.trayRot);it.obj.userData.base=null;});
+  anims.length=0;pasteMesh.visible=false;psu.visible=false;cableMeshes.forEach(m=>{rig.remove(m);m.geometry.dispose();});cableMeshes.length=0;
+  drawScreen(null);ledMat.emissiveIntensity=0;updateHalos();
+}
+function setView(){camera.position.set(innerWidth<760?4.4:4.6,innerWidth<760?6.2:4.6,innerWidth<760?6.6:5.2);}
+async function begin(withCam){
+  $('#startScreen').style.display='none';$('#modeBtn').style.display='inline-block';
+  if(withCam){const ok=await startCamera();setAR(ok);if(!ok)toast('A câmera não está disponível aqui. Seguindo sem câmera.',3500);}else setAR(false);
+  resetGame();setView();S.step=1;dots();rig.visible=false;
+  $('#scan').style.display='flex';$('#scanTxt').textContent='Procurando o marcador…';
+  setTimeout(()=>{$('#scanTxt').textContent='Marcador reconhecido';},1500);
+  setTimeout(()=>{$('#scan').style.display='none';rig.visible=true;S.spawnT=0;S.startTime=performance.now();render();},2200);
+}
+$('#startAR').onclick=()=>begin(true);
+$('#start3D').onclick=()=>begin(false);
+$('#learnBtn').onclick=()=>{const l=$('#learn');l.style.display=l.style.display==='block'?'none':'block';};
+$('#again').onclick=()=>{resetGame();setView();$('#endScreen').style.display='none';$('#modeBtn').style.display='inline-block';S.startTime=performance.now();S.spawnT=0;go(1);};
+
+/* ---------- loop ---------- */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;
+  if(w<760){controls.target.set(1.0,-.5,.9);camera.fov=55;}else{controls.target.set(1.6,.1,.2);camera.fov=42;}camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();setView();
+const easeBack=k=>{const c=1.7;return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2);};
+const clock=new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
+  if(S.spawnT>=0&&S.spawnT<1){S.spawnT=reduceMotion?1:Math.min(1,S.spawnT+dt/.9);rig.scale.setScalar(Math.max(.001,easeBack(S.spawnT)));}
+  if(S.psuT>=0&&S.psuT<1){S.psuT=reduceMotion?1:Math.min(1,S.psuT+dt/.7);psu.scale.setScalar(Math.max(.001,easeBack(S.psuT)));}
+  for(let i=anims.length-1;i>=0;i--){const a=anims[i];a.t=Math.min(1,a.t+dt/a.dur);const e=a.t<.5?2*a.t*a.t:1-Math.pow(-2*a.t+2,2)/2;
+    a.obj.position.lerpVectors(a.p0,a.p1,e);a.obj.position.y+=Math.sin(PI*e)*.55;a.obj.quaternion.copy(a.q0).slerp(a.q1,e);if(a.t>=1)anims.splice(i,1);}
+  if(S.sel){const o=ITEMS[S.sel].obj;if(o.userData.base!=null)o.position.y=o.userData.base+.12+.04*Math.sin(t*4);}
+  if(Object.values(halos).some(h=>h.visible))haloMat.opacity=.2+.25*(.5+.5*Math.sin(t*5));
+  if(S.on){coolerFan.rotation.y+=dt*14;gpuFans.forEach(f=>f.rotation.z+=dt*12);ledMat.emissiveIntensity=1.2;ledMat.emissive.setHSL((t*.15)%1,.9,.5);}
+  controls.update();renderer.render(scene,camera);
+}
+loop();dots();
+})();
+
+</script>
+</body>
+</html>
