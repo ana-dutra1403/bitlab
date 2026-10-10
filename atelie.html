@@ -140,7 +140,17 @@ input[type=range]{width:100%;accent-color:var(--board)}
   .qr{width:110px;height:110px}
 }
 @media (max-width:760px){#panel .nomob{display:none}}
-@media (max-width:760px){body.cam #panel{max-height:40%}}
+@media (max-width:760px){body.cam #panel{max-height:40%}body.ph-paredes #panel{max-height:40%}}
+.okline{margin:0 0 8px;color:var(--ok);font-weight:600}
+#panel .obsel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+#panel .ob{display:flex;flex-direction:column;gap:3px;align-items:stretch;text-align:left;background:var(--asphalt2);border:1px solid var(--line);border-radius:10px;padding:6px;color:#cdd6e2;font:inherit;cursor:pointer}
+#panel .ob img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px}
+#panel .ob span{font-size:12.5px;line-height:1.2;font-weight:600}
+#panel .ob small{font-size:11.5px;color:#93a0b4}
+#panel .ob.sel{border-color:var(--board);box-shadow:0 0 0 2px var(--board) inset}
+#panel .ob.done{opacity:.6}
+#panel .qlbtn{display:flex;align-items:center;gap:10px;background:#f6f4f1;color:#141a22;border-radius:10px;padding:8px 12px;font-weight:700;text-decoration:none;margin:8px 0}
+#panel .qlbtn img{width:44px;height:34px;object-fit:cover;border-radius:4px}
 @media (prefers-reduced-motion: reduce){ #scan .line{animation:none;top:50%} }
 
 .card{border-radius:10px;padding:10px 12px;margin:0 0 12px;background:rgba(255,255,255,.045);border:1px solid var(--line);border-left:4px solid var(--mut)}
@@ -242,18 +252,18 @@ input[type=range]{width:100%;accent-color:var(--board)}
   <div class="wrap one">
     <div>
       <h1>Bit Lab<small>Ateliê em realidade aumentada</small></h1>
-      <p class="lead">Quatro amigas vão abrir uma exposição de Claude Monet em realidade aumentada. O computador da exposição e a galeria só existem na tela do celular, desenhados sobre um marcador na mesa. Escolha onde colocar o marcador, faça a AR funcionar, monte o PC e abra o portal da galeria.</p>
+      <p class="lead">A escola ganhou peças doadas para montar o seu primeiro computador. Só que elas são caras e frágeis: um erro e queimam. Por isso o Ateliê Bit Lab ensaia a montagem em realidade aumentada, sobre uma folha na mesa. O computador montado tem uma missão: abrir a primeira exposição da escola, com obras de Claude Monet que nunca vieram à cidade. Quando ele liga, as obras saem da tela e vão para as paredes da sala.</p>
       <div class="castrow" id="startCast"></div>
       <ul class="rules">
-        <li><b>Objetivo:</b> abrir uma exposição de Claude Monet em realidade aumentada, revelando as 4 partes da obra principal.</li>
+        <li><b>Objetivo:</b> ensaiar a montagem do PC sobre o marcador, ligar o computador e pendurar as obras de Monet nas paredes da sala.</li>
         <li><b>Como jogar:</b> com a câmera, aponte o celular para o marcador impresso e mova o celular de verdade. Sem câmera, arraste a tela para mover o celular. Toque nas peças e nos botões do painel.</li>
-        <li><b>Regra principal:</b> o PC só aparece enquanto a AR enxerga o marcador.</li>
+        <li><b>Regra principal:</b> o PC só aparece enquanto a AR enxerga o marcador. As obras só vão para a parede quando a AR encontra pontos de referência nela.</li>
         <li><b>A AR perde o marcador quando:</b> ele sai da tela, o celular fica rente à mesa, falta luz ou um reflexo cobre os cantos.</li>
         <li><b>Placar:</b> cada erro e cada vez que a AR perde o marcador contam no resultado final.</li>
       </ul>
       <div class="actions"><button class="cta go" id="startCam">Jogar com a câmera (AR de verdade)</button><button class="ghost" id="start3D">Jogar sem câmera (simulação)</button></div>
       <p class="note">Para jogar com a câmera, abra no celular, coloque o marcador Bit Lab impresso em cima da mesa e permita o acesso à câmera.</p>
-      <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador são de verdade, mas os problemas de luz e reflexo da mesa escolhida são simulados. Sem câmera, tudo é simulado. Os números de pontos e as escalas são ilustrativos.</p>
+      <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador e a busca de pontos na parede são de verdade. Os problemas de luz e reflexo da mesa, o cálculo do plano da parede e a fixação das obras (só pelo giroscópio) são simplificados. Sem câmera, tudo é simulado. Os números de pontos são ilustrativos.</p>
     </div>
   </div>
 </section>
@@ -261,7 +271,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 <section class="screen" id="endScreen">
   <div class="wrap one">
     <div>
-      <h1>Exposição aberta<small>Monet em realidade aumentada</small></h1>
+      <h1>Exposição aberta<small>O primeiro laboratório da escola funcionou</small></h1>
       <img id="endArt" class="endart" alt="Impressão, nascer do sol, de Claude Monet">
       <div class="stats" id="stats"></div>
       <h3 class="lt">O que a AR fez, a cada quadro</h3>
@@ -271,12 +281,14 @@ input[type=range]{width:100%;accent-color:var(--board)}
         <li>Calculou a posição e o ângulo do celular em relação ao marcador.</li>
         <li>Usou o tamanho real do marcador para acertar a escala.</li>
         <li>Desenhou o PC por cima da imagem. Sem o marcador visível, não há onde desenhar.</li>
+        <li>Sem marcador, achou pontos de referência na própria parede e calculou um plano em pé para pendurar as obras no tamanho real.</li>
+        <li>Na galeria 360°, trocou a câmera pelo giroscópio: o mundo real sumiu, e isso já é realidade virtual.</li>
       </ol>
       <h3 class="lt">Simplificações deste jogo</h3>
       <ul class="learned">
-        <li>A câmera e o reconhecimento são simulados; uma AR real analisa a imagem de verdade, dezenas de vezes por segundo.</li>
-        <li>A perda de rastreamento usa regras simples (ângulo, enquadramento, luz e obstrução).</li>
-        <li>Os números de pontos e os componentes do PC são ilustrativos.</li>
+        <li>No modo câmera, o marcador e os pontos da parede são lidos de verdade. No modo sem câmera, tudo é simulado.</li>
+        <li>Na parede, o plano é estimado e a obra fica presa só pelo giroscópio: se você andar, ela não acompanha. Apps completos usam também a câmera para isso.</li>
+        <li>A montagem do PC é resumida (pasta térmica, SSD e fonte entram sozinhos) e os tamanhos das obras são aproximados, menos <i>Impressão, nascer do sol</i> (48 × 63 cm).</li>
       </ul>
       <h3 class="lt">Créditos</h3>
       <div class="castrow" id="endCast"></div>
@@ -285,7 +297,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
         <button class="ghost" id="learnBtn">Aplicação prática</button>
       </div>
       <div class="learn" id="learn">
-        <p><strong>Ideia de aplicação:</strong> escolas sem laboratório de informática podem usar AR para ensinar montagem de computadores. Cada aluno imprime um marcador e vê as peças em tamanho real sobre a carteira, usando só o celular.</p>
+        <p><strong>Ideia de aplicação:</strong> escolas sem laboratório ou sem museu por perto. Com uma folha impressa e um celular, os alunos ensaiam a montagem de um computador em tamanho real e levam obras de arte para as paredes da própria sala.</p>
         <p><strong>Limitação:</strong> precisa de celular com câmera, boa iluminação e marcador impresso no tamanho certo, e o rastreamento falha em ângulos muito inclinados.</p>
       </div>
     </div>
@@ -2257,9 +2269,9 @@ function beep(times){try{const A=window.AudioContext||window.webkitAudioContext;
    ATELIÊ EM REALIDADE AUMENTADA — fases de AR, eventos e encerramento
    ===================================================================== */
 ray.layers.enableAll();
-const PH=['inicio','local','reconhecer','escala','rastrear','proc','mem','video','energia','ligar','galeria','fim'];
-const PHN=['Início','Local','Reconhecer','Escala','Rastrear','Processador','Memória','Vídeo','Energia','Ligar','Galeria','Fim'];
-const STEPOF={inicio:0,local:1,galeria:6,reconhecer:1,escala:1,rastrear:1,proc:2,mem:3,video:4,energia:5,ligar:6,fim:7};
+const PH=['inicio','local','reconhecer','escala','rastrear','proc','mem','ligar','paredes','galeria','fim'];
+const PHN=['Início','Mesa de ensaio','Reconhecer','Escala','Rastrear','Processador','Memória e vídeo','Ligar','Obras na parede','Galeria 360°','Fim'];
+const STEPOF={inicio:0,local:1,galeria:6,paredes:6,reconhecer:1,escala:1,rastrear:1,proc:2,mem:3,ligar:6,fim:7};
 const AR={marker:-1,recog:false,scaleCm:null,scaleF:.5,tracked:false,reason:'',why:null,handOn:false,lightOff:false,
   turned:false,lostOnce:false,recovered:false,az0:0,losses:0,wasTracked:false,art:[false,false,false,false],handEv:false,lightEv:false,lostCard:null,place:null,glare:false,glareEv:false,inside:false,obra:null};
 
@@ -2354,13 +2366,13 @@ const PSRC={impressao:'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA
 const PAINT={
   impressao:{t:'Impressão, nascer do sol',a:'Claude Monet, 1872',m:'Musée Marmottan Monet, Paris',ar:1.31,g:'ar',
     d:'O porto de Le Havre ao amanhecer.',c:'Um crítico usou o título deste quadro, de forma irônica, para apelidar o grupo de pintores. Foi assim que nasceu o nome Impressionismo!',base:['#9aa7b6','#e0864a','#5d6f82']},
-  iris:{t:'Íris no jardim do artista',a:'Claude Monet, 1900',m:'',ar:1.2,g:'lu',
+  iris:{t:'Íris no jardim do artista',a:'Claude Monet, 1900',m:'Musée d’Orsay, Paris',ar:1.2,g:'lu',
     d:'O caminho de flores do jardim de Monet em Giverny.',c:'Monet plantava o jardim pensando nas cores que queria pintar. Primeiro ele “desenhava” com flores de verdade, depois com tinta.',base:['#7c9a5a','#c9a3d9','#c8402c']},
   crisantemos:{t:'Crisântemos',a:'Claude Monet, 1897',m:'',ar:1.24,g:'gi',
     d:'Um quadro inteiro tomado por flores, sem céu nem chão.',c:'De perto são só manchas de tinta. De longe, o nosso cérebro junta as manchas e enxerga as flores. Parecido com a câmera juntando pontos para reconhecer o marcador!',base:['#e3c34a','#d9707e','#c8402c']},
   ponte:{t:'A ponte japonesa',a:'Claude Monet, 1899',m:'',ar:1.27,g:'al',
     d:'A ponte sobre o lago de ninfeias, em Giverny.',c:'Monet mandou construir esse lago e essa ponte para ter o que pintar perto de casa. Pintou a mesma ponte mais de dez vezes.',base:['#4f7a3c','#9cbf6a','#6d8fa0']},
-  ninfeias:{t:'Ninfeias',a:'Claude Monet, 1906',m:'',ar:1.06,g:'lu',
+  ninfeias:{t:'Ninfeias',a:'Claude Monet, 1906',m:'Art Institute of Chicago',ar:1.06,g:'lu',
     d:'As flores de nenúfar flutuando no lago de Giverny.',c:'Monet pintou cerca de 250 quadros de ninfeias, sempre o mesmo lago com luzes diferentes.',base:['#5e7fa3','#8fb08a','#d9a3b8']},
   nuvens:{t:'Ninfeias: as nuvens',a:'Claude Monet, 1903',m:'',ar:1.48,g:'gi',
     d:'O céu aparece só como reflexo na água do lago.',c:'Repare: não tem céu no quadro, só o reflexo das nuvens na água. É uma ilusão, parecida com a AR, que mistura o que é real com o que só parece estar ali.',base:['#8e98a3','#c9c2b0','#3d4650']}};
@@ -2393,12 +2405,11 @@ const HINTS={
   reconhecer:['al','Escolha o marcador com mais cantos diferentes entre si. Desenho repetido confunde a câmera.'],
   escala:['gi','Meça a folha impressa! O marcador do Bit Lab tem 14 cm.'],
   rastrear:['ar','Arraste para os lados para dar a volta na mesa. Depois arraste para cima até o celular ficar quase rente à mesa.'],
-  proc:['al','A placa é S5: o processador precisa ter o mesmo soquete. Na pasta térmica, solte na faixa verde.'],
-  mem:['lu','Os slots A2 e B2 ficam em canais diferentes. Assim os dois pentes trabalham juntos.'],
-  video:['gi','A placa de vídeo vai no slot mais comprido, o PCIe x16.'],
-  energia:['ar','Some 125 + 220 + 75 W. Escolha a fonte com folga, mas sem exagero.'],
-  ligar:['lu','Feche o gabinete antes de ligar o computador.'],
-  galeria:['ar','Atravesse o portal e gire o celular para ver a sala inteira. Toque nas obras: cada uma de nós conta uma curiosidade.']};
+  proc:['al','A placa é S5: o processador precisa ter o mesmo soquete. Na pasta térmica, solte na faixa verde. Se a AR perder o marcador, a peça cai da sua mão.'],
+  mem:['lu','A placa só aceita DDR5. Um pente em cada canal (A2 e B2) faz os dois trabalharem juntos. A placa de vídeo vai no slot mais comprido, o PCIe x16.'],
+  ligar:['ar','Some 125 + 220 + 75 W. Escolha a fonte com folga, mas sem exagero. Depois feche o gabinete e ligue.'],
+  paredes:['gi','Procure uma parede com textura: tijolos, cartazes, uma porta. Parede lisa e branca não tem pontos de referência.'],
+  galeria:['ar','Volte para o marcador, atravesse o portal e gire o celular para ver a sala inteira. Toque nas obras.']};
 const LOSTHINT={angle:['ar','Levante o celular (arraste o dedo para baixo) e aponte para a mesa em diagonal. Rente à mesa eu não vejo os cantos.'],off:['al','Gire a câmera até a folha voltar para a tela.'],
   glare:['lu','O reflexo apagou os cantos. Leve o marcador para a mesa com luminária.'],light:['lu','Ficou escuro demais. Leve o marcador para a mesa com luminária.']};
 const FACTS=[['al','Os filtros de rosto das redes sociais usam a mesma ideia: em vez de um marcador, a câmera procura pontos do seu rosto.'],
@@ -2476,6 +2487,8 @@ let lightK=1;
 
 /* ---------- textos das fases de AR ---------- */
 Object.assign(CARDS,{
+  wallOk:['good','Parede encontrada: pontos suficientes para calcular um plano em pé.','Sem marcador, a AR usa o próprio ambiente. Ela acha cantos e texturas na imagem, percebe que vários estão no mesmo plano e entende que ali é uma parede. A obra fica presa nesse plano e aparece no tamanho real.','Apps de decoração e o Google Arts & Culture usam isso para pendurar quadros virtuais na parede da sua casa.'],
+  wallFail:['bad','Parede lisa: quase nenhum ponto de referência.','Uma parede branca e lisa não tem cantos nem contrastes. É o mesmo problema do marcador borrado: sem pontos, a AR não sabe onde a superfície está.','Por isso os apps pedem para você mover o celular devagar e apontar para lugares com textura.'],
   mkA:['bad','A câmera encontrou só 3 pontos de referência.','A AR reconhece um marcador pelos cantos e contrastes da imagem. Uma imagem borrada e clara não tem cantos nítidos, então não há pontos suficientes para saber onde ela está.','Fotos desfocadas ou papéis lisos não funcionam como marcador.'],
   mkB:['bad','A câmera encontrou 49 pontos, mas todos iguais.','No xadrez, cada canto é idêntico aos outros. A AR não sabe qual canto é qual, então não descobre a rotação do marcador e o objeto ficaria girando ou tremendo.','Bons marcadores têm desenhos que não se repetem, como um QR Code.'],
   mkC:['good','85 pontos diferentes encontrados: marcador reconhecido.','Com cantos nítidos num padrão que não se repete, a AR compara o que a câmera vê com a imagem original e calcula a posição e o ângulo do celular em relação à folha. Os eixos coloridos mostram essa posição.','Apps de AR fazem essa comparação dezenas de vezes por segundo.'],
@@ -2513,15 +2526,15 @@ function lostBox(){if(AR.tracked||STEPOF[S.ph]<2||S.ph==='fim')return '';const k
 function render(){
   dots();const st=STEPOF[S.ph];panel.style.display=S.ph!=='inicio'&&S.ph!=='fim'?'block':'none';let h='';
   if(S.ph==='local'){const P=AR.place;
-    h=board(0,'Preparar o ateliê')+say('marcador','Antes de tudo: onde o marcador vai ficar? O lugar muda como a câmera o enxerga.')+
+    h=board(0,'Mesa de ensaio')+say('marcador','Antes de ensaiar a montagem: em qual mesa o marcador vai ficar? O lugar muda como a câmera enxerga a folha.')+
       `<div class="places">${[['janela','Mesa perto da janela','O sol entra e sai'],['vidro','Mesa de vidro','Superfície brilhante'],['luminaria','Mesa com luminária','Luz constante e fosca']].map(([k,t,d])=>`<button class="plc ${P===k?(k==='luminaria'?'ok':'sel'):''}" data-place="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>`+
       (P?cardKey(P==='luminaria'?'plGood':'plRisk'):'')+`<button class="cta" id="next" ${P?'':'disabled'}>Colocar o marcador</button>`;}
-  if(S.ph==='galeria'){h=board(0,AR.inside?'Galeria 360°':'Galeria em AR')+(AR.inside?'':artRow());
+  if(S.ph==='galeria'){h=board(0,AR.inside?'Galeria 360°':'Portal da galeria')+(AR.inside?'':artRow());
     if(!AR.tracked)h+=lostBox();
     else if(AR.inside)h+=`<div class="nomob">`+say('camera','Bem-vinda à exposição de Monet! Gire o celular ou arraste a tela para olhar em volta e toque nas obras.')+`</div>`+
 
       (vr.canGyro&&!vr.gyro?`<button class="ghost" id="gyroBtn">Usar o giroscópio do celular</button>`:'')+`<button class="ghost" id="exitGal">Voltar para a AR</button><button class="cta" id="finish">Ver o resultado</button>`;
-    else h+=say('rastreio','A exposição de Monet está presa ao marcador, como o PC estava. Olhe por dentro do portal e toque nas obras. Quando quiser, atravesse o portal.')+
+    else h+=say('rastreio','Volte a apontar para o marcador: o computador abriu ali um portal para a galeria completa, que não cabe na sala. Atravesse para entrar.')+
 `<button class="cta go" id="enterGal">Atravessar o portal</button><button class="cta" id="finish">Ver o resultado</button>`;}
   if(S.ph==='reconhecer'&&CAM.on){
     h=board(1,'Reconhecimento')+artRow()+say('camera',CAMTXT.recog)+
@@ -2543,7 +2556,7 @@ function render(){
       checklist([['Dar a volta na mesa',AR.turned,true],['Abaixar o celular até eu perder o marcador',AR.lostOnce,AR.turned],['Voltar a enquadrar o marcador',AR.recovered,AR.lostOnce]])+
       (!AR.tracked?cardKey(AR.why==='angle'?'trLost':'trOff'):AR.recovered?cardKey('trBack'):AR.turned?cardKey('trTurn'):'')+
       `<button class="cta" id="next" ${AR.recovered&&AR.tracked?'':'disabled'}>Começar a montagem</button>`;}
-  if(st>=2&&st<=5){const titles={2:'Processador',3:'Memória RAM',4:'Placa de vídeo',5:'Energia'};
+  if(st>=2&&st<=3){const titles={2:'Processador',3:'Memória e vídeo'};
     h=board(st+2,titles[st])+artRow();
     if(!AR.tracked)h+=lostBox();
     else{
@@ -2552,31 +2565,35 @@ function render(){
         else if(!S.paste)h+=`<p>Segure o botão e solte na faixa verde.</p><div class="pm"><div class="pz"></div><div class="pf" id="pf" style="width:${S.pasteAmt}%"></div></div><div class="pl"><span>pouca</span><span>ideal</span><span>demais</span></div><button class="ghost hold" id="hold">Segure para aplicar a pasta</button>`;
         else if(!S.placed.cooler)h+=pickBtn('cooler','Pegar o cooler');
         h+=`<button class="cta" id="next" ${S.placed.cooler?'':'disabled'}>Próxima fase</button>`;}
-      if(st===3){const both=S.placed.ram1&&S.placed.ram2;h+=cardKey(S.card)+`<p>Canais: <b>A1 e A2</b> (canal A) e <b>B1 e B2</b> (canal B). Instale os dois pentes compatíveis.</p>`+checklist([['Pente 1',S.placed.ram1,true],['Pente 2',S.placed.ram2,true]]);
+      if(st===3){const both=S.placed.ram1&&S.placed.ram2;h+=cardKey(S.card)+`<p>Canais: <b>A1 e A2</b> (canal A) e <b>B1 e B2</b> (canal B). Instale os dois pentes compatíveis e a placa de vídeo no slot mais comprido.</p>`+checklist([['Pente 1',S.placed.ram1,true],['Pente 2',S.placed.ram2,true],['Placa de vídeo',S.placed.gpu,true]]);
+        if(!S.placed.ram1)h+=pickBtn('ram1','Pegar o pente DDR5 (1)');if(!S.placed.ram2)h+=pickBtn('ram2','Pegar o pente DDR5 (2)');if(!both)h+=pickBtn('ramD4','Pegar o pente DDR4');if(!S.placed.gpu)h+=pickBtn('gpu','Pegar a placa de vídeo');
         if(both)h+=bar('Velocidade da memória',S.ramSpeed,S.ramSpeed>=100?'var(--ok)':S.ramSpeed>=85?'var(--board)':'var(--bad)');
-        if(!S.placed.ram1)h+=pickBtn('ram1','Pegar o pente DDR5 (1)');if(!S.placed.ram2)h+=pickBtn('ram2','Pegar o pente DDR5 (2)');if(!both)h+=pickBtn('ramD4','Pegar o pente DDR4');
         if(both&&S.ramSpeed<100)h+=`<button class="ghost" id="reram">Tirar os pentes e tentar de novo</button>`;
-        h+=`<button class="cta" id="next" ${both&&S.ramSpeed>=85?'':'disabled'}>Próxima fase</button>`;}
-      if(st===4){h+=cardKey(S.card)+`<p>O SSD já foi instalado. Encaixe a placa de vídeo no slot certo.</p>`+checklist([['Placa de vídeo',S.placed.gpu,true]]);
-        if(!S.placed.gpu)h+=pickBtn('gpu','Pegar a placa de vídeo');
-        h+=`<button class="cta" id="next" ${S.placed.gpu?'':'disabled'}>Próxima fase</button>`;}
-      if(st===5){h+=cardKey(S.card);
-        if(!S.psu)h+=`<p>Some o consumo e escolha uma fonte. Depois toque no espaço da fonte, na frente da placa.</p><table class="qtable"><tr><td>Processador</td><td>125 W</td></tr><tr><td>Placa de vídeo</td><td>220 W</td></tr><tr><td>Demais peças</td><td>75 W</td></tr><tr><td>Total</td><td>420 W</td></tr></table>`+pickBtn('psu350','Pegar a fonte de 350 W')+pickBtn('psu650','Pegar a fonte de 650 W')+pickBtn('psu1600','Pegar a fonte de 1600 W');
-        else h+=`<p>Cabos de energia conectados automaticamente.</p>`;
-        h+=`<button class="cta" id="next" ${S.psu?'':'disabled'}>Próxima etapa</button>`;}
+        h+=`<button class="cta" id="next" ${both&&S.ramSpeed>=85&&S.placed.gpu?'':'disabled'}>Próxima fase</button>`;}
     }}
-  if(S.ph==='ligar'){h=board(8,'Abrir a exposição')+artRow();
+  if(S.ph==='paredes'){h=board(0,'Obras na parede')+artRow();
+    if(!PW.found){const pc=Math.min(100,Math.round(PW.score/WALL_N*100));
+      h+=say('rastreio',CAM.on?'Agora <b>sem marcador</b>! Aponte o celular para uma parede da sala, com o celular em pé. A câmera procura pontos de referência na própria parede.':'Agora <b>sem marcador</b>! Arraste para olhar a sala e mire o círculo do centro numa parede. A câmera procura pontos de referência na própria parede.')+
+        bar('Pontos de referência na parede',pc,pc>=100?'var(--ok)':pc>35?'var(--board)':'var(--bad)')+(PW.failSeen?cardKey('wallFail'):'');}
+    else{const n=Object.keys(PW.placed).length;
+      h+=`<p class="okline">Parede encontrada · ${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.placed[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
+        `<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`+arLink(PW.sel)+
+        `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+cardKey('wallOk');}}
+  if(S.ph==='ligar'){h=board(8,'Ligar o computador')+artRow();
     if(!AR.tracked)h+=lostBox();
-    else if(!S.caseOn)h+=say('marcador','Tudo montado sobre o marcador. Feche o gabinete e ligue o computador da exposição.')+`<button class="cta" id="closeCase">Fechar o gabinete</button>`;
+    else if(!S.psu)h+=cardKey(S.card)+say('marcador','Falta a fonte, que leva a energia para todas as peças. Some o consumo e escolha uma.')+`<table class="qtable"><tr><td>Processador</td><td>125 W</td></tr><tr><td>Placa de vídeo</td><td>220 W</td></tr><tr><td>Demais peças</td><td>75 W</td></tr><tr><td>Total</td><td>420 W</td></tr></table>`+[350,650,1600].map(w=>`<button class="ghost" data-psu="${w}">Fonte de ${w} W</button>`).join('');
+    else if(!S.caseOn)h+=(S.card?cardKey(S.card):'')+say('marcador','Tudo montado sobre o marcador. Feche o gabinete e ligue o computador da exposição.')+`<button class="cta" id="closeCase">Fechar o gabinete</button>`;
     else if(!S.on)h+=`<button class="cta go" id="power">Ligar o PC</button>`;
     else if(!S.booted)h+=`<p>Iniciando…</p>`;
-    else h+=say('camera','O computador ligou e mostrou a obra principal da exposição: Impressão, nascer do sol, de Claude Monet. Agora abra a exposição em AR.')+`<button class="cta" id="next">Abrir o portal da galeria</button>`;}
+    else h+=say('camera','O computador ligou e abriu os arquivos da exposição! A primeira obra já está na tela: Impressão, nascer do sol. Agora vamos tirar as obras da tela e levar para as paredes da sala.')+`<button class="cta" id="next">Levar as obras para a parede</button>`;}
   const wasMin=panel.classList.contains('min');panel.innerHTML=h;if(wasMin)panel.classList.add('min');
   const bh=$('#boardHead');if(bh)bh.onclick=()=>panel.classList.toggle('min');
   panel.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const id=b.dataset.pick;if(selectable(id))select(id);else{const w=why(id);if(w)toast(w);}});
   panel.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>chooseMarker(+b.dataset.mk));
   panel.querySelectorAll('[data-cm]').forEach(b=>b.onclick=()=>chooseScale(+b.dataset.cm));
   const nx=$('#next');if(nx)nx.onclick=next;
+  panel.querySelectorAll('[data-psu]').forEach(b=>b.onclick=()=>choosePSU(+b.dataset.psu));
+  panel.querySelectorAll('[data-ob]').forEach(b=>b.onclick=()=>{PW.sel=b.dataset.ob;render();});
   const rr=$('#reram');if(rr)rr.onclick=resetRAM;
   const hd=$('#hold');if(hd)bindHold(hd);
   const fp=$('#fixPlace');if(fp)fp.onclick=()=>{setPlace('luminaria');AR.lightOff=false;AR.glare=false;toast('Marcador na mesa com luminária: luz constante e sem reflexo.');};
@@ -2602,24 +2619,30 @@ function chooseMarker(i){AR.marker=i;marker.material.map=TEX[i];marker.material.
   render();}
 function chooseScale(cm){AR.scaleCm=cm;AR.scaleF=cm===5?2.8:cm===50?.28:1;if(cm===14)unlock(1);else S.err++;render();}
 function next(){const i=PH.indexOf(S.ph);setPhase(PH[i+1]);}
-function setPhase(ph){drop();S.ph=ph;$('#guide').style.display='none';setTimeout(hintFace,0);S.step=STEPOF[ph];S.card=null;$('#info').style.display='none';
+function setPhase(ph){drop();S.ph=ph;document.body.classList.toggle('ph-paredes',ph==='paredes');$('#guide').style.display='none';setTimeout(hintFace,0);S.step=STEPOF[ph];S.card=null;$('#info').style.display='none';
   ['cpuS4','cpuNB'].forEach(id=>ITEMS[id].obj.visible=S.step<=2);ITEMS.ramD4.obj.visible=S.step<=3;
-  ['psu350','psu650','psu1600'].forEach(id=>ITEMS[id].obj.visible=(S.step===5)||S.psu===id);
+  ['psu350','psu650','psu1600'].forEach(id=>ITEMS[id].obj.visible=S.psu===id);
   trayMat.visible=S.step<6;updateHalos();
   if(ph==='rastrear'){AR.az0=azNow();}
   if(ph==='proc'){unlock(2);}
   focusStep(ph);
   if(ph==='galeria'){openGallery();}
-  if(ph==='video'){if(!S.placed.ssd){const o=ITEMS.ssd.obj;o.position.set(-.5,TOP+.016,.15);o.rotation.set(0,0,0);S.placed.ssd=true;}
-    setTimeout(()=>{if(S.ph==='video'&&!AR.lightEv&&AR.place==='janela'){AR.lightEv=true;AR.lightOff=true;}},1600);}
+  if(ph==='mem'){if(!S.placed.ssd){const o=ITEMS.ssd.obj;o.position.set(-.5,TOP+.016,.15);o.rotation.set(0,0,0);S.placed.ssd=true;}
+    setTimeout(()=>{if(S.ph==='mem'&&!AR.lightEv&&AR.place==='janela'){AR.lightEv=true;AR.lightOff=true;}},1600);}
+  if(ph==='paredes')enterWalls();else leaveWalls();
   if(ph==='fim')showEnd();
   render();}
 /* evento da mão: quando o primeiro pente entra */
+ITEMS.gpu.step=3;
 const _place=place;place=function(id,...a){_place(id,...a);if(S.ph==='mem'&&!AR.glareEv&&AR.place==='vidro'&&(id==='ram1'||id==='ram2')){AR.glareEv=true;
   setTimeout(()=>{if(S.ph==='mem'&&AR.place==='vidro')AR.glare=true;},1400);}};
 /* fonte: liga os cabos automaticamente */
 const _slotTap=slotTap;slotTap=function(k){_slotTap(k);if(S.ph==='energia'&&S.psu&&!S.cables.p24){['psu350','psu1600'].forEach(id=>{if(id!==S.psu)ITEMS[id].obj.visible=false;});setTimeout(()=>{['p24','cpu8','gpu8'].forEach(c=>connect(c));setCard('psu_ok');unlock(3);render();},900);}};
 
+function choosePSU(w){if(S.psu)return;
+  if(w!==650){S.err++;setCard(w===350?'psu_350':'psu_1600');render();return;}
+  S.psu='psu650';ITEMS.psu650.obj.visible=true;place('psu650',[.5,0,2.1]);['psu350','psu1600'].forEach(id=>ITEMS[id].obj.visible=false);setCard('psu_ok');render();
+  setTimeout(()=>{['p24','cpu8','gpu8'].forEach(c=>{if(!S.cables[c])connect(c);});unlock(3);render();},700);}
 function closeCase(){S.caseOn=true;trayMat.visible=false;caseG.visible=true;caseG.position.set(0,2.4,0);moveTo(caseG,[0,0,0],[0,0,0],1.0,0);render();}
 let bootT=-1;
 function powerOn(){S.on=true;render();
@@ -2651,31 +2674,21 @@ function artTex(parts,title){return canvasTex(1024,576,(g,w,h)=>{drawArt(g,w,h,p
 function plaque(t1,t2){return canvasTex(512,128,(g,w,h)=>{g.fillStyle='#f7f3ec';g.fillRect(0,0,w,h);g.fillStyle='#22252b';g.font='600 46px "Chakra Petch", sans-serif';g.fillText(t1,18,58);g.fillStyle='#6b6f78';g.font='30px "Barlow Semi Condensed", sans-serif';g.fillText(t2,18,104);});}
 let galBuilt=false;
 function buildGallery(){if(galBuilt)return;galBuilt=true;
-  const wall=std(0xefe9df,0,.85),dark=std(0x22252b,.2,.5),wood=std(0x7a5236,0,.55);
+  /* só o portal de entrada da galeria 360°, preso ao marcador */
+  const dark=std(0x22252b,.2,.5),wood=std(0x7a5236,0,.55);
   const A=(geo,mat,pos,rot,ud)=>{const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);if(ud)m.userData.obra=ud;galG.add(m);return m;};
-  A(box(2.8,.04,2.5),wood,[0,.02,-.15]);
-  A(box(2.8,1.05,.06),wall,[0,.56,-1.37]);A(box(.06,1.05,2.5),wall,[-1.4,.56,-.15]);A(box(.06,1.05,2.5),wall,[1.4,.56,-.15]);
-  /* portal na frente */
-  A(rbox(.13,1.2,.13,.03),dark,[-.8,.6,1.08]);A(rbox(.13,1.2,.13,.03),dark,[.8,.6,1.08]);A(rbox(1.73,.13,.15,.03),dark,[0,1.2,1.08]);
-  [[-.72,.6,1.08,.025,1.08,.03],[.72,.6,1.08,.025,1.08,.03],[0,1.12,1.08,1.42,.025,.03]].forEach(([x,y,z,a,b,c])=>{const m=A(box(a,b,c),new THREE.MeshBasicMaterial({color:0xf5c518,toneMapped:false}),[x,y,z]);galLeds.push(m);});
-  /* obra coletiva */
-  A(rbox(1.46,.86,.04,.01),dark,[0,.5,-1.33]);A(new THREE.PlaneGeometry(1.36,.765),new THREE.MeshBasicMaterial({map:paintTex('impressao'),toneMapped:false}),[0,.5,-1.305],null,'impressao');
-  A(new THREE.PlaneGeometry(.5,.125),new THREE.MeshBasicMaterial({map:plaque('Impressão, nascer do sol','Claude Monet, 1872'),toneMapped:false}),[0,.08+.0,-1.335]).position.y=.035;
-  const title=canvasTex(1024,128,(g,w,h)=>{g.fillStyle='#22252b';g.font='600 70px "Chakra Petch", sans-serif';g.textAlign='center';g.fillText('Monet em realidade aumentada',w/2,88);});
-  A(new THREE.PlaneGeometry(1.4,.175),new THREE.MeshBasicMaterial({map:title,transparent:true,toneMapped:false}),[0,1.0,-1.335]).scale.setScalar(.7);
-  /* obras individuais nas paredes laterais, com avatar de cada integrante */
-  const side=[['iris',-1,-.7],['crisantemos',-1,.4],['ponte',1,-.7],['ninfeias',1,.4]];
-  side.forEach(([k,sx,z])=>{const gm=byId(PAINT[k].g);const ry=sx<0?PI/2:-PI/2,x=sx*1.365;
-    A(rbox(.04,.48,.82,.01),dark,[x,.6,z]);
-    const ph=Math.min(.46,.76/PAINT[k].ar),pw=ph*PAINT[k].ar;const pl=A(new THREE.PlaneGeometry(pw,ph),new THREE.MeshBasicMaterial({map:paintTex(k),toneMapped:false}),[x-sx*.023,.6,z],[0,ry,0],k);
-    const strip=A(box(.02,.02,.7),new THREE.MeshBasicMaterial({color:new THREE.Color(CHAR[gm.papel].c),toneMapped:false}),[x-sx*.03,.9,z]);
-    A(new THREE.PlaneGeometry(.42,.105),new THREE.MeshBasicMaterial({map:plaque(PAINT[k].t,PAINT[k].a),toneMapped:false}),[x-sx*.024,.27,z],[0,ry,0]);
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:urlTex(avatarURL(gm)),transparent:true}));sp.scale.set(.3,.3,1);sp.position.set(sx*.95,.3,z+.32);sp.userData.obra=k;galG.add(sp);
-    A(cyl(.09,.11,.04,24),dark,[sx*.95,.06,z+.32]);A(cyl(.012,.012,.12,8),dark,[sx*.95,.13,z+.32]);});
-  /* banco central */
-  A(rbox(.7,.06,.2,.02),wood,[0,.18,.15]);A(box(.05,.16,.16),dark,[-.28,.08,.15]);A(box(.05,.16,.16),dark,[.28,.08,.15]);
+  A(cyl(1.25,1.3,.05,48),wood,[0,.025,0]);
+  A(rbox(.16,1.9,.16,.04),dark,[-.85,.98,0]);A(rbox(.16,1.9,.16,.04),dark,[.85,.98,0]);A(rbox(1.86,.16,.18,.04),dark,[0,1.9,0]);
+  [[-.75,.98,0,.03,1.76,.04],[.75,.98,0,.03,1.76,.04],[0,1.81,0,1.52,.03,.04]].forEach(([x,y,z,a,b,c])=>{const m=A(box(a,b,c),new THREE.MeshBasicMaterial({color:0xf5c518,toneMapped:false}),[x,y,z]);galLeds.push(m);});
+  /* dentro do portal: uma prévia da sala, como uma janela */
+  const pv=canvasTex(512,640,(g,w,h)=>{g.fillStyle='#efe9df';g.fillRect(0,0,w,h);g.fillStyle='#d9cdb9';g.fillRect(0,h*.72,w,h*.28);
+    g.fillStyle='#22252b';g.fillRect(w*.14,h*.2,w*.72,h*.42);g.fillStyle='#e0864a';g.fillRect(w*.17,h*.23,w*.66,h*.36);});
+  const glow=A(new THREE.PlaneGeometry(1.5,1.72),new THREE.MeshBasicMaterial({map:pv,transparent:true,opacity:.92,toneMapped:false,side:THREE.DoubleSide}),[0,.96,0],null,'portal');
+  paintWaiters.impressao=paintWaiters.impressao||[];const redraw=()=>{const c=pv.image,g=c.getContext('2d');if(PIMG.impressao)g.drawImage(PIMG.impressao,c.width*.17,c.height*.23,c.width*.66,c.height*.36);pv.needsUpdate=true;};redraw();paintWaiters.impressao.push(redraw);
+  const title=canvasTex(1024,160,(g,w,h)=>{g.fillStyle='#22252b';g.fillRect(0,0,w,h);g.fillStyle='#f5c518';g.font='700 84px "Chakra Petch", sans-serif';g.textAlign='center';g.fillText('Galeria Monet',w/2,110);});
+  A(new THREE.PlaneGeometry(1.4,.22),new THREE.MeshBasicMaterial({map:title,toneMapped:false}),[0,2.16,0]);
   galG.traverse(o=>{o.layers.set(1);if(o.isMesh){o.castShadow=false;o.receiveShadow=true;}});}
-function openGallery(){buildGallery();caseG.visible=true;S.galT=0;galG.scale.setScalar(.001);AR.obra=null;toast('O portal da galeria se abriu sobre o marcador.');setTimeout(()=>guide('gi','Você sabia?','Museus de verdade já usam essa ideia: o Google Arts & Culture lançou galerias de arte que aparecem em AR pelo celular.',7000),1500);
+function openGallery(){buildGallery();caseG.visible=true;S.galT=0;galG.scale.setScalar(.001);AR.obra=null;toast('O portal da galeria se abriu sobre o marcador.');setTimeout(()=>guide('gi','Você sabia?','O Google Arts & Culture tem galerias inteiras que você visita pelo celular, com as obras em alta resolução.',7000),1500);
   camFly=innerWidth<760?[[.4,4.6,6.4],[0,-.2,.4]]:[[.6,3.0,4.6],[0,.45,-.2]];}
 /* ---------- galeria 360° (realidade virtual) ---------- */
 const vr={scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(72,1,.05,80),yaw:0,pitch:0,gyro:false,a0:null,canGyro:('DeviceOrientationEvent' in window)&&matchMedia('(pointer:coarse)').matches,built:false};
@@ -2709,26 +2722,27 @@ function buildVR(){if(vr.built)return;vr.built=true;const sc=vr.scene;sc.environ
     hang(canvasTex(512,96,(g,w,h)=>{g.fillStyle='#22252b';g.font='600 46px "Chakra Petch", sans-serif';g.textAlign='center';g.fillText(m.nome,w/2,62);}),1.2,.225,[x,y-.55,5.44],PI,null,false);});
   /* banco */
   A(rbox(1.6,.1,.45,.03),std(0x7a5236,0,.55),[0,.45,2.2]);A(box(.08,.42,.4),dark,[-.65,.21,2.2]);A(box(.08,.42,.4),dark,[.65,.21,2.2]);}
-function setVRCam(){vr.cam.quaternion.setFromEuler(new THREE.Euler(vr.pitch,vr.yaw,0,'YXZ'));}
-function enterGallery(){buildVR();AR.inside=true;AR.obra=null;vr.yaw=0;vr.pitch=0;setVRCam();controls.enabled=false;if(CAM.on)video.style.display='none';render();if(!AR.vrTold){AR.vrTold=true;setTimeout(()=>guide('lu','Agora é realidade virtual','Olhe em volta: a mesa e o marcador sumiram. Na AR, o desenho aparecia por cima do mundo real. Aqui, tudo o que você vê é digital, e o celular só usa o giroscópio para saber para onde você virou.',11000),700);}}
+const lookCam=()=>S.ph==='paredes'&&!AR.inside?PW.cam:vr.cam;
+function setVRCam(){lookCam().quaternion.setFromEuler(new THREE.Euler(vr.pitch,vr.yaw,0,'YXZ'));}
+function enterGallery(){vr.a0=null;vr.yawOff=0;if(vr.canGyro&&!vr.gyro)startGyro();buildVR();AR.inside=true;AR.obra=null;vr.yaw=0;vr.pitch=0;setVRCam();controls.enabled=false;if(CAM.on)video.style.display='none';render();if(!AR.vrTold){AR.vrTold=true;setTimeout(()=>guide('lu','Agora é realidade virtual','Gire o celular e o corpo para olhar a sala inteira. A mesa e o marcador sumiram: na AR, o desenho aparecia por cima do mundo real. Aqui, tudo é digital, e o celular só usa o giroscópio para saber para onde você virou.',11000),700);}}
 function exitGallery(silent){if(!AR.inside&&!silent)return;AR.inside=false;controls.enabled=!CAM.on;if(CAM.on){video.style.display='block';CAM.seen=-1e9;}stopGyro();if(!silent)render();}
 /* arrastar para olhar em volta */
 let vrDrag=null;
-renderer.domElement.addEventListener('pointerdown',e=>{if(AR.inside)vrDrag=[e.clientX,e.clientY,vr.yaw,vr.pitch];});
-addEventListener('pointermove',e=>{if(!vrDrag||vr.gyro)return;vr.yaw=vrDrag[2]+(e.clientX-vrDrag[0])*.006;vr.pitch=Math.max(-1.1,Math.min(1.1,vrDrag[3]+(e.clientY-vrDrag[1])*.006));setVRCam();});
+renderer.domElement.addEventListener('pointerdown',e=>{if(AR.inside||S.ph==='paredes')vrDrag=[e.clientX,e.clientY,vr.yaw,vr.pitch,vr.yawOff||0];});
+addEventListener('pointermove',e=>{if(!vrDrag)return;if(vr.gyro){vr.yawOff=vrDrag[4]+(e.clientX-vrDrag[0])*.006;return;}vr.yaw=vrDrag[2]+(e.clientX-vrDrag[0])*.006;vr.pitch=Math.max(-1.1,Math.min(1.1,vrDrag[3]+(e.clientY-vrDrag[1])*.006));setVRCam();});
 addEventListener('pointerup',()=>{vrDrag=null;});
 /* giroscópio */
 const zee=new THREE.Vector3(0,0,1),gEuler=new THREE.Euler(),gq0=new THREE.Quaternion(),gq1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5)),gYaw=new THREE.Quaternion();
-function onOri(e){if(e.alpha==null)return;const d=PI/180;if(vr.a0==null)vr.a0=e.alpha;
-  gEuler.set(e.beta*d,(e.alpha-vr.a0)*d,-e.gamma*d,'YXZ');vr.cam.quaternion.setFromEuler(gEuler);vr.cam.quaternion.multiply(gq1);
-  const or=((screen.orientation&&screen.orientation.angle)||window.orientation||0)*d;vr.cam.quaternion.multiply(gq0.setFromAxisAngle(zee,-or));}
+function onOri(e){if(e.alpha==null)return;const d=PI/180;if(vr.a0==null)vr.a0=e.alpha;PW.beta=e.beta;const C=lookCam();
+  gEuler.set(e.beta*d,(e.alpha-vr.a0)*d,-e.gamma*d,'YXZ');C.quaternion.setFromEuler(gEuler);C.quaternion.multiply(gq1);C.quaternion.premultiply(gYaw.setFromAxisAngle(yAx,vr.yawOff||0));
+  const or=((screen.orientation&&screen.orientation.angle)||window.orientation||0)*d;C.quaternion.multiply(gq0.setFromAxisAngle(zee,-or));}
 async function startGyro(){try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const r=await DeviceOrientationEvent.requestPermission();if(r!=='granted'){toast('Sem permissão para o giroscópio. Arraste a tela para olhar em volta.');return;}}
   vr.a0=null;vr.gyro=true;addEventListener('deviceorientation',onOri);render();}catch(e){toast('O giroscópio não está disponível aqui. Arraste a tela para olhar em volta.');}}
 function stopGyro(){if(vr.gyro){removeEventListener('deviceorientation',onOri);vr.gyro=false;}}
 renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='galeria'||(!galG.visible&&!AR.inside))return;
   if(vrDrag&&Math.hypot(e.clientX-vrDrag[0],e.clientY-vrDrag[1])>7)return;
   const r=renderer.domElement.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,AR.inside?vr.cam:camera);
-  const hit=ray.intersectObjects(AR.inside?vr.scene.children:galG.children,true).find(h=>h.object.userData.obra);if(hit){const k=hit.object.userData.obra;if(k.startsWith('guia:')){const m=byId(k.slice(5));guide(m.id,'Curadoria','Oi! Sou '+m.nome+'. Toque em uma obra e eu conto uma curiosidade sobre ela.',5000);return;}AR.obra=k;const P=PAINT[k];if(P)guide(P.g,P.t,P.c,9000);}});
+  const hit=ray.intersectObjects(AR.inside?vr.scene.children:galG.children,true).find(h=>h.object.userData.obra);if(hit){const k=hit.object.userData.obra;if(k==='portal'){enterGallery();return;}if(k.startsWith('guia:')){const m=byId(k.slice(5));guide(m.id,'Curadoria','Oi! Sou '+m.nome+'. Toque em uma obra e eu conto uma curiosidade sobre ela.',5000);return;}AR.obra=k;const P=PAINT[k];if(P)guide(P.g,P.t,P.c,9000);}});
 
 /* ---------- tela final ---------- */
 function showEnd(){const secs=Math.round((performance.now()-S.startTime)/1000);
@@ -2744,7 +2758,7 @@ function resetAll(){clearState();Object.assign(AR,{marker:-1,recog:false,scaleCm
   marker.material.map=texBlank;marker.material.needsUpdate=true;drawScreen('off');camFly=null;resize();ledMat.emissiveIntensity=0;bootT=-1;panel.classList.remove('min');refreshArt();updateHalos();}
 function setViewG(){}
 function setView(){if(innerWidth<760)camera.position.set(4.3,6.9,7.4);else camera.position.set(3.8,3.6,4.6);}
-function begin(){$('#startScreen').style.display='none';$('#endScreen').style.display='none';resetAll();setView();S.startTime=performance.now();if(CAM.on){setPlace('luminaria');setPhase('reconhecer');}else setPhase('local');setTimeout(()=>guide('ar','Bem-vinda!','Oi, eu sou a Ana Roberta! Eu e as meninas vamos aparecer pela tela com dicas e curiosidades. Se travar, toque em Dica lá em cima.',8000),900);}
+function begin(){$('#startScreen').style.display='none';$('#endScreen').style.display='none';resetAll();setView();S.startTime=performance.now();if(CAM.on){setPlace('luminaria');setPhase('reconhecer');}else setPhase('local');setTimeout(()=>guide('ar','Bem-vinda!','Oi, eu sou a Ana Roberta! As peças doadas são caras e frágeis, então vamos ensaiar a montagem em realidade aumentada. Eu e as meninas aparecemos pela tela com dicas. Se travar, toque em Dica.',8000),900);}
 const TXT0={hr:HINTS.rastrear,lo:LOSTHINT.off,fo:LOSTFIX.off,hk:HINTS.reconhecer};
 function camTexts(on){HINTS.rastrear=on?CAMTXT.hintR:TXT0.hr;HINTS.reconhecer=on?['al','Aponte para o marcador impresso com boa luz e sem reflexo. A folha inteira precisa aparecer na tela, sem dedos na frente.']:TXT0.hk;LOSTHINT.off=on?CAMTXT.lostOff:TXT0.lo;LOSTFIX.off=on?CAMTXT.fixOff:TXT0.fo;}
 $('#start3D').onclick=()=>{CAM.on=false;camTexts(false);document.body.classList.remove('cam');setAR(false);controls.enabled=true;resize();begin();};$('#again').onclick=begin;
@@ -2759,7 +2773,7 @@ function evalTracking(){
   if(!AR.recog)return [false,'mk'];
   if(AR.lightOff)return [false,'light'];
   if(AR.glare)return [false,'glare'];
-  if(AR.inside)return [true,null];
+  if(AR.inside||S.ph==='paredes')return [true,null];
   if(CAM.on)return performance.now()-CAM.seen<400?[true,null]:[false,'off'];
   if(controls.getPolarAngle()>1.2)return [false,'angle'];
   let seen=false;for(const [x,z] of [[0,0],[-1.5,-1.5],[1.5,-1.5],[1.5,1.5],[-1.5,1.5]]){tv.set(x,0,z).project(camera);if(Math.abs(tv.x)<1&&Math.abs(tv.y)<1&&tv.z<1){seen=true;break;}}if(!seen)return [false,'off'];
@@ -2797,6 +2811,15 @@ function readMarker(g,w,h,c){
     if(d<best){best=d;rot=r;}}
   if(best>9)return null;
   return {q:[c[rot],c[(rot+1)%4],c[(rot+2)%4],c[(rot+3)%4]],d:best};}
+/* refina os cantos: ajusta uma reta em cada lado do contorno e cruza as retas (precisão abaixo de 1 pixel) */
+function refineCorners(q,ct){const L=[];
+  for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),ux=dx/len,uy=dy/len;
+    let n=0,mx=0,my=0;const pts=[];for(const p of ct){const t=(p.x-a.x)*ux+(p.y-a.y)*uy,d=-(p.x-a.x)*uy+(p.y-a.y)*ux;if(t>len*.12&&t<len*.88&&Math.abs(d)<2.5){pts.push(p);mx+=p.x;my+=p.y;n++;}}
+    if(n<6)return q;mx/=n;my/=n;let sxx=0,sxy=0,syy=0;for(const p of pts){const x=p.x-mx,y=p.y-my;sxx+=x*x;sxy+=x*y;syy+=y*y;}
+    const th=.5*Math.atan2(2*sxy,sxx-syy);L.push([mx,my,Math.cos(th),Math.sin(th)]);}
+  const out=[];for(let i=0;i<4;i++){const A=L[(i+3)%4],B=L[i];const den=A[2]*B[3]-A[3]*B[2];if(Math.abs(den)<1e-6)return q;
+    const t=((B[0]-A[0])*B[3]-(B[1]-A[1])*B[2])/den;const x=A[0]+A[2]*t,y=A[1]+A[3]*t;if(Math.hypot(x-q[i].x,y-q[i].y)>4)return q;out.push({x,y});}
+  return out;}
 function poseFromCorners(q,w,h,f){
   const img=q.map(p=>[p.x-w/2,h/2-p.y]);const H=homog([[-1.5,1.5],[1.5,1.5],[1.5,-1.5],[-1.5,-1.5]],img);if(!H)return null;
   const col=j=>new THREE.Vector3(H[0][j]/f,H[1][j]/f,-H[2][j]);const h1=col(0),h2=col(1),h3=col(2);
@@ -2812,28 +2835,44 @@ function detectMarker(){
   if(CAM.cv.width!==w||CAM.cv.height!==h){CAM.cv.width=w;CAM.cv.height=h;}
   CAM.ctx.drawImage(video,0,0,w,h);const img=CAM.ctx.getImageData(0,0,w,h);
   CV.grayscale(img,cvG);CV.adaptiveThreshold(cvG,cvT,3,6);
-  const cont=CV.findContours(cvT,cvB);let found=null,bestD=99,bestP=0;
+  const cont=CV.findContours(cvT,cvB);let found=null,bestD=99,bestP=0,fct=null;
   for(const ct of cont){if(ct.length<w*.1)continue;const p=CV.approxPolyDP(ct,ct.length*.05);
     if(p.length!==4||!CV.isContourConvex(p)||CV.minEdgeLength(p)<12)continue;
     const dx1=p[1].x-p[0].x,dy1=p[1].y-p[0].y,dx2=p[2].x-p[0].x,dy2=p[2].y-p[0].y;if(dx1*dy2-dy1*dx2<0){const s=p[1];p[1]=p[3];p[3]=s;}
     const r=readMarker(cvG.data,w,h,p);if(!r)continue;const pr=CV.perimeter(p);
-    if(r.d<bestD||(r.d===bestD&&pr>bestP)){found=r.q;bestD=r.d;bestP=pr;}}
-  if(!found)return null;
+    if(r.d<bestD||(r.d===bestD&&pr>bestP)){found=r.q;bestD=r.d;bestP=pr;fct=ct;}}
+  if(!found)return null;found=refineCorners(found,fct);
   const M=poseFromCorners(found,w,h,CAM.fr*Math.max(w,h));if(!M)return null;
   const p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();M.decompose(p,q,s);if(p.y<.1||!isFinite(p.x))return null;
   CAM.tp.copy(p);CAM.tq.copy(q);CAM.last=found;return true;}
 function camFov(){if(!CAM.on||!video.videoWidth)return;const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(innerWidth/vw,innerHeight/vh);
   camera.fov=2*Math.atan(innerHeight/2/(CAM.fr*Math.max(vw,vh)*s))*180/PI;camera.updateProjectionMatrix();}
 video.addEventListener('loadedmetadata',camFov);video.addEventListener('resize',camFov);
-function camStep(){if(!CAM.on||AR.inside)return;
+CAM.sp=new THREE.Vector3();CAM.sq=new THREE.Quaternion();CAM.uYaw=0;CAM.uScale=1;
+const qUser=new THREE.Quaternion(),yAx=new THREE.Vector3(0,1,0);
+function camStep(){if(!CAM.on||AR.inside||S.ph==='paredes')return;
   if(detectMarker()){CAM.seen=performance.now();CAM.found++;
-    if(!CAM.has||performance.now()-CAM.lastOk>500){camera.position.copy(CAM.tp);camera.quaternion.copy(CAM.tq);CAM.has=true;}
+    if(!CAM.has||performance.now()-CAM.lastOk>500){CAM.sp.copy(CAM.tp);CAM.sq.copy(CAM.tq);CAM.has=true;}
     CAM.lastOk=performance.now();}
   /* suavização: parado fica firme, movimento rápido acompanha */
-  const dp=camera.position.distanceTo(CAM.tp),da=camera.quaternion.angleTo(CAM.tq);
-  const k=Math.min(.85,Math.max(.12,dp/.6,da/.25));
-  camera.position.lerp(CAM.tp,k);camera.quaternion.slerp(CAM.tq,k);camera.updateMatrixWorld();}
-const azNow=()=>CAM.on?Math.atan2(camera.position.x,camera.position.z):controls.getAzimuthalAngle();
+  const dp=CAM.sp.distanceTo(CAM.tp)/Math.max(1,CAM.tp.length()*.15),da=CAM.sq.angleTo(CAM.tq);
+  const k=Math.min(.85,Math.max(.07,dp/.5,da/.2));
+  CAM.sp.lerp(CAM.tp,k);CAM.sq.slerp(CAM.tq,k);
+  /* gestos: girar e dar zoom no modelo = mover a câmera virtual em volta do marcador */
+  qUser.setFromAxisAngle(yAx,-CAM.uYaw);
+  camera.position.copy(CAM.sp).multiplyScalar(1/CAM.uScale).applyQuaternion(qUser);
+  camera.quaternion.copy(qUser).multiply(CAM.sq);camera.updateMatrixWorld();}
+const gPts=new Map();let gStart=null;
+renderer.domElement.addEventListener('pointerdown',e=>{if(!CAM.on||AR.inside||S.ph==='paredes')return;gPts.set(e.pointerId,[e.clientX,e.clientY]);gStart=null;});
+addEventListener('pointermove',e=>{if(!CAM.on||AR.inside||!gPts.has(e.pointerId))return;gPts.set(e.pointerId,[e.clientX,e.clientY]);
+  const P=[...gPts.values()];
+  if(!gStart)gStart={yaw:CAM.uYaw,sc:CAM.uScale,p:P.map(p=>p.slice()),d:P.length>1?Math.hypot(P[0][0]-P[1][0],P[0][1]-P[1][1]):0,n:P.length};
+  if(P.length!==gStart.n){gStart=null;return;}
+  if(P.length===1)CAM.uYaw=gStart.yaw+(P[0][0]-gStart.p[0][0])*.012;
+  else if(gStart.d>10)CAM.uScale=Math.max(.4,Math.min(3,gStart.sc*Math.hypot(P[0][0]-P[1][0],P[0][1]-P[1][1])/gStart.d));});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+const gEnd=e=>{gPts.delete(e.pointerId);gStart=null;};addEventListener('pointerup',gEnd);addEventListener('pointercancel',gEnd);
+const azNow=()=>CAM.on?Math.atan2(CAM.sp.x,CAM.sp.z):controls.getAzimuthalAngle();
 const CAMTXT={
   recog:'Aponte a câmera para o marcador Bit Lab impresso. A câmera procura cantos e contrastes na imagem: são os <b>pontos de referência</b>.',
   rastrearSay:'A AR recalcula a posição a cada quadro. Mexa o celular de verdade: <b>dê a volta</b> no marcador (ou gire a folha), depois <b>abaixe o celular</b> até quase encostar na mesa.',
@@ -2843,9 +2882,118 @@ const CAMTXT={
 async function beginCam(){const b=$('#startCam');b.disabled=true;b.textContent='Abrindo a câmera…';
   const ok=await startCamera();b.disabled=false;b.textContent='Jogar com a câmera (AR de verdade)';
   if(!ok){toast('Não consegui abrir a câmera. Confira se o site tem permissão. Seguindo sem câmera.',4500);CAM.on=false;begin();return;}
-  CAM.on=true;CAM.has=false;camTexts(true);document.body.classList.add('cam');begin();setAR(true);controls.enabled=false;camFov();
-  setTimeout(()=>guide('lu','Câmera ligada','Aponte para o marcador Bit Lab impresso, em cima da mesa. Deixe a folha na parte de cima da tela. Para ver mais, toque no título do painel e ele encolhe.',9000),5200);}
+  CAM.on=true;CAM.has=false;CAM.uYaw=0;CAM.uScale=1;camTexts(true);document.body.classList.add('cam');begin();setAR(true);controls.enabled=false;camFov();
+  setTimeout(()=>guide('lu','Câmera ligada','Aponte para o marcador Bit Lab impresso, em cima da mesa. Deixe a folha na parte de cima da tela. Arraste com um dedo para girar o modelo e use dois dedos para dar zoom.',9000),5200);}
 $('#startCam').onclick=beginCam;
+
+/* ---------- obras na parede: AR sem marcador ---------- */
+/* Com câmera: os pontos de referência da parede são achados de verdade na imagem (cantos e texturas);
+   o plano da parede e a fixação da obra usam o giroscópio (3 graus de liberdade), uma simplificação.
+   Sem câmera: uma sala de aula simulada, com uma parede lisa (falha) e paredes com textura (funcionam). */
+const PW={scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(65,1,.05,60),built:false,found:false,foundT:0,lowT:0,score:0,pts:[],
+  sel:'impressao',placed:{},failSeen:false,room:new THREE.Group(),wallPlane:null,grid:null,beta:null,lastScan:0,aimTex:null};
+PW.cam.position.set(0,1.5,0);
+/* tamanhos reais (altura x largura, cm) segundo os museus; Crisântemos: tamanho aproximado */
+const DIM={impressao:[48,63],iris:[81,92],crisantemos:[81,100],ponte:[74,93],ninfeias:[90,94],nuvens:[75,105]};
+const HCM=Object.fromEntries(Object.entries(DIM).map(([k,v])=>[k,v[0]]));
+const OBK=['impressao','iris','crisantemos','ponte','ninfeias','nuvens'];
+const cmW=k=>DIM[k][1];
+const dimTxt=k=>`${DIM[k][1]} × ${DIM[k][0]} cm${k==='crisantemos'?' (aprox.)':''}`;
+const thumbs={};function thumbURL(k){if(thumbs[k])return thumbs[k];const c=document.createElement('canvas');c.width=160;c.height=Math.round(160/PAINT[k].ar);drawPainting(c.getContext('2d'),c.width,c.height,k);
+  const u=c.toDataURL('image/jpeg',.8);if(PIMG[k])thumbs[k]=u;return u;}
+const QL=(()=>{try{return document.createElement('a').relList.supports('ar');}catch(e){return false;}})();
+const ANDROID=/android/i.test(navigator.userAgent);
+function arLink(k){const P=PAINT[k];
+  if(QL)return `<a rel="ar" class="qlbtn" href="obras/${k}.usdz#allowsContentScaling=0"><img src="${thumbURL(k)}" alt="">Pendurar na minha parede de verdade</a>`;
+  if(ANDROID){const f=new URL('obras/'+k+'.glb',location.href).href;
+    return `<a class="qlbtn" href="intent://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(f)}&mode=ar_only&enable_vertical_placement=true&title=${encodeURIComponent(P.t)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;"><img src="${thumbURL(k)}" alt="">Pendurar na minha parede de verdade</a>`;}
+  return `<p class="fix">No celular, aqui aparece o botão <b>Pendurar na minha parede de verdade</b>, que abre a obra no visualizador de realidade aumentada do aparelho, presa a uma parede real.</p>`;}
+function buildWalls(){if(PW.built)return;PW.built=true;const sc=PW.scene;sc.environment=envMap;
+  sc.add(new THREE.HemisphereLight(0xfffaf0,0x404048,1.0));const dl=new THREE.DirectionalLight(0xffffff,.5);dl.position.set(1,3,2);sc.add(dl);
+  const R=PW.room;sc.add(R);
+  const brick=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#b9a493';g.fillRect(0,0,w,h);for(let y=0;y<16;y++)for(let x=-1;x<9;x++){const o=y%2?32:0;g.fillStyle=`hsl(${14+Math.random()*10},${30+Math.random()*15}%,${44+Math.random()*12}%)`;g.fillRect(x*64+o+2,y*32+2,60,28);}});
+  brick.wrapS=brick.wrapT=THREE.RepeatWrapping;brick.repeat.set(3,1.2);
+  const board=canvasTex(512,256,(g,w,h)=>{g.fillStyle='#c79a63';g.fillRect(0,0,w,h);for(let i=0;i<70;i++){g.fillStyle=`hsla(30,40%,${30+Math.random()*30}%,.35)`;g.fillRect(Math.random()*w,Math.random()*h,3,3);}
+    [['#f2c018',30,30],['#ec6fa8',190,60],['#3b7be0',330,24],['#f6f4f1',90,140],['#9c2a4f',260,150],['#f6f4f1',400,130]].forEach(([c,x,y])=>{g.fillStyle=c;g.fillRect(x,y,90,80);g.fillStyle='rgba(0,0,0,.5)';for(let k=0;k<4;k++)g.fillRect(x+10,y+14+k*14,60-k*8,5);});});
+  const plain=std(0xf3f1ec,0,.95),floorM=std(0xffffff,0,.6,{map:woodTex.clone()});floorM.map.repeat.set(2,2);floorM.map.needsUpdate=true;
+  const W=(geo,mat,pos,rot,tex,name)=>{const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.userData.wall=true;m.userData.tex=tex;m.userData.name=name;R.add(m);return m;};
+  W(new THREE.PlaneGeometry(8,3),std(0xffffff,0,.9,{map:brick}),[0,1.5,-3.5],null,true,'parede de tijolos');
+  W(new THREE.PlaneGeometry(7,3),plain,[-3.5,1.5,0],[0,PI/2,0],false,'parede lisa');
+  W(new THREE.PlaneGeometry(7,3),plain,[3.5,1.5,0],[0,-PI/2,0],true,'parede com mural');
+  const mural=new THREE.Mesh(new THREE.PlaneGeometry(3,1.5),std(0xffffff,0,.9,{map:board}));mural.position.set(3.48,1.55,-.3);mural.rotation.y=-PI/2;mural.userData.wall=true;mural.userData.tex=true;R.add(mural);
+  W(new THREE.PlaneGeometry(8,3),plain,[0,1.5,3.5],[0,PI,0],false,'parede lisa');
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(8,7),floorM);fl.rotation.x=-PI/2;R.add(fl);
+  const ce=new THREE.Mesh(new THREE.PlaneGeometry(8,7),std(0xe9e7e2,0,1));ce.rotation.x=PI/2;ce.position.y=3;R.add(ce);
+  /* quadro-negro e carteiras para parecer uma sala */
+  const gb=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.1,.05),std(0x2e4a3a,0,.8));gb.position.set(0,1.6,3.45);gb.userData.wall=true;gb.userData.tex=false;R.add(gb);
+  [[-1.4,-1.2],[0,-1.2],[1.4,-1.2],[-1.4,1.2],[1.4,1.2]].forEach(([x,z])=>{const d=new THREE.Mesh(new THREE.BoxGeometry(.9,.05,.6),std(0x8a6a4a,0,.6));d.position.set(x,.72,z);R.add(d);});
+  /* pontos de referência simulados nas paredes com textura */
+  const P=[];for(let i=0;i<520;i++){const s=Math.random();if(s<.55)P.push(-3.8+Math.random()*7.6,.2+Math.random()*2.6,-3.48);else P.push(3.48,.3+Math.random()*2.5,-3.2+Math.random()*6.4);}
+  for(let i=0;i<10;i++){P.push(-3.48,.3+Math.random()*2.5,-3+Math.random()*6);}
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  PW.simPts=new THREE.Points(pg,new THREE.PointsMaterial({color:0x36d399,size:.045,transparent:true,opacity:.95,depthWrite:false}));PW.simPts.visible=false;R.add(PW.simPts);
+  /* grade que mostra a parede encontrada */
+  const gt=canvasTex(256,256,(g,w,h)=>{g.strokeStyle='rgba(54,211,153,.85)';g.lineWidth=3;for(let i=0;i<=8;i++){g.beginPath();g.moveTo(i*32,0);g.lineTo(i*32,h);g.stroke();g.beginPath();g.moveTo(0,i*32);g.lineTo(w,i*32);g.stroke();}});
+  PW.grid=new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.6),new THREE.MeshBasicMaterial({map:gt,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));PW.grid.visible=false;sc.add(PW.grid);}
+/* pontos reais da câmera: cantos e texturas numa grade de células */
+const FD={cv:document.createElement('canvas')};FD.ctx=FD.cv.getContext('2d',{willReadFrequently:true});
+function featureScan(){const vw=video.videoWidth,vh=video.videoHeight;if(!vw||video.readyState<2)return [];
+  const sc=200/Math.max(vw,vh),w=Math.round(vw*sc),h=Math.round(vh*sc);if(FD.cv.width!==w||FD.cv.height!==h){FD.cv.width=w;FD.cv.height=h;}
+  FD.ctx.drawImage(video,0,0,w,h);const d=FD.ctx.getImageData(0,0,w,h).data;const g=new Float32Array(w*h);
+  for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=d[j]*.3+d[j+1]*.59+d[j+2]*.11;
+  const C=8,pts=[];for(let cy=1;cy<Math.floor(h/C)-1;cy++)for(let cx=1;cx<Math.floor(w/C)-1;cx++){let best=0,bx=0,by=0;
+    for(let y=cy*C;y<cy*C+C;y++)for(let x=cx*C;x<cx*C+C;x++){const i=y*w+x;const gx=g[i+1]-g[i-1],gy=g[i+w]-g[i-w];const m=Math.min(Math.abs(gx),Math.abs(gy));if(m>best){best=m;bx=x;by=y;}}
+    if(best>16)pts.push([bx/w,by/h]);}
+  return pts;}
+const ptsCv=document.createElement('canvas');ptsCv.id='ptsCv';ptsCv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;display:none';document.body.appendChild(ptsCv);
+function drawPts(){const W=innerWidth,H=innerHeight;if(ptsCv.width!==W||ptsCv.height!==H){ptsCv.width=W;ptsCv.height=H;}const g=ptsCv.getContext('2d');g.clearRect(0,0,W,H);
+  if(!CAM.on||PW.found)return;const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;const s=Math.max(W/vw,H/vh);g.fillStyle='#36d399';
+  PW.pts.forEach(([u,v])=>{const x=(u*vw-vw/2)*s+W/2,y=(v*vh-vh/2)*s+H/2;g.fillRect(x-3,y-3,6,6);});
+  g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2;g.beginPath();g.arc(W/2,H*.32,18,0,7);g.stroke();}
+const WALL_N=40;
+function pwStep(){const now=performance.now(),dt=Math.min(.25,(now-(PW.lastT||now))/1000);PW.lastT=now;
+  if(!PW.found){let sc=0;
+    if(CAM.on){if(performance.now()-PW.lastScan>120){PW.lastScan=performance.now();PW.pts=featureScan();}sc=PW.pts.length;
+      if(PW.beta!=null&&(PW.beta<45||PW.beta>135))sc=Math.min(sc,8);}
+    else{ray.setFromCamera({x:0,y:0},PW.cam);const hit=ray.intersectObjects(PW.room.children,false).find(h=>h.object.userData.wall);PW.aimHit=hit||null;sc=hit?(hit.object.userData.tex?70:5):0;PW.simPts.visible=true;}
+    PW.score+=(sc-PW.score)*Math.min(1,dt*4);
+    if(PW.score>=WALL_N){PW.foundT+=dt;PW.lowT=0;}else{PW.foundT=0;if(PW.score<14)PW.lowT+=dt;}
+    if(PW.lowT>2.5&&!PW.failSeen){PW.failSeen=true;S.err++;guide('al','Parede lisa','Aqui quase não tenho pontos de referência: parede lisa e branca não tem cantos nem textura. Tente uma parede com tijolos, cartazes, uma porta ou um quadro.',8000);render();}
+    if(PW.foundT>1.1)wallFound();
+    if(frameN%10===0)render();}
+}
+function wallFound(){PW.found=true;PW.simPts.visible=false;ptsCv.getContext('2d').clearRect(0,0,ptsCv.width,ptsCv.height);
+  const dir=new THREE.Vector3(0,0,-1).applyQuaternion(PW.cam.quaternion);dir.y=0;dir.normalize();
+  let pos,n;if(!CAM.on&&PW.aimHit){pos=PW.aimHit.point.clone();n=PW.aimHit.face.normal.clone().transformDirection(PW.aimHit.object.matrixWorld);}
+  else{pos=PW.cam.position.clone().addScaledVector(dir,2.2);pos.y=1.5;n=dir.clone().negate();}
+  PW.wallPlane=new THREE.Plane().setFromNormalAndCoplanarPoint(n,pos);
+  PW.grid.position.copy(pos).addScaledVector(n,.01);PW.grid.lookAt(pos.clone().add(n));PW.grid.visible=true;
+  setTimeout(()=>{if(PW.grid)PW.grid.material.opacity=.25;},2500);
+  guide('lu','Parede encontrada','Achei pontos suficientes e calculei um plano em pé: a parede. Agora escolha uma obra e toque na parede para pendurar.',7000);render();}
+function hangPainting(k,pos,n){const P=PAINT[k];let g=PW.placed[k];if(g)PW.scene.remove(g);
+  g=new THREE.Group();const w=cmW(k)/100,h=HCM[k]/100;
+  const fr=new THREE.Mesh(new THREE.BoxGeometry(w+.08,h+.08,.04),std(0x2a2620,.2,.5));g.add(fr);
+  const pic=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:paintTex(k),toneMapped:false}));pic.position.z=.022;g.add(pic);
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(.36,.09),new THREE.MeshBasicMaterial({map:plaque(P.t,`${dimTxt(k)}`),toneMapped:false}));pl.position.set(0,-h/2-.12,.005);g.add(pl);
+  g.position.copy(pos).addScaledVector(n,.025);g.lookAt(g.position.clone().add(n));PW.scene.add(g);PW.placed[k]=g;
+
+  guide(P.g,P.t,`${P.c} Tamanho real: ${dimTxt(k)}.`,9000);
+  const nx=OBK.find(o=>!PW.placed[o]);if(nx)PW.sel=nx;render();}
+let pwDown=null;
+renderer.domElement.addEventListener('pointerdown',e=>{if(S.ph==='paredes')pwDown=[e.clientX,e.clientY];});
+renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='paredes'||!pwDown)return;const moved=Math.hypot(e.clientX-pwDown[0],e.clientY-pwDown[1]);pwDown=null;if(moved>8)return;
+  if(!PW.found){toast(CAM.on?'Primeiro aponte para uma parede até ela ser encontrada.':'Primeiro mire o centro da tela numa parede até ela ser encontrada.');return;}
+  const r=renderer.domElement.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},PW.cam);
+  if(!CAM.on){const hit=ray.intersectObjects(PW.room.children,false).find(h=>h.object.userData.wall);if(!hit)return;
+    if(!hit.object.userData.tex){toast('Essa parede é lisa: a AR não achou pontos para prender a obra ali.');S.err++;return;}
+    hangPainting(PW.sel,hit.point,hit.face.normal.clone().transformDirection(hit.object.matrixWorld));return;}
+  const p=new THREE.Vector3();if(!ray.ray.intersectPlane(PW.wallPlane,p)||p.distanceTo(PW.cam.position)>8){toast('Toque em cima da parede encontrada.');return;}
+  hangPainting(PW.sel,p,PW.wallPlane.normal.clone());});
+function enterWalls(){buildWalls();PW.lastT=0;$('#info').style.display='none';PW.found=false;PW.foundT=0;PW.lowT=0;PW.score=0;PW.pts=[];PW.failSeen=false;Object.values(PW.placed).forEach(g=>PW.scene.remove(g));PW.placed={};PW.sel='impressao';PW.grid.visible=false;
+  PW.room.visible=!CAM.on;PW.scene.background=CAM.on?null:new THREE.Color(0xdcd8d0);ptsCv.style.display='block';
+  vr.yaw=0;vr.pitch=-.05;vr.a0=null;vr.yawOff=0;setVRCam();
+  if(vr.canGyro&&!vr.gyro)startGyro();}
+function leaveWalls(){ptsCv.style.display='none';}
 
 let lastW=0;
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;
@@ -2878,7 +3026,7 @@ function loop(){
   if(changed){if(!ok)drop();else if(AR.losses>0&&STEPOF[S.ph]>=1&&!AR.inside&&AR.recog)guide(['ar','al','lu','gi'][AR.losses%4],'Voltou!','Voltei a ver o marcador, então o objeto voltou para o mesmo lugar.',3500);render();hintFace();}
   AR.wasTracked=ok;
   /* PC só aparece quando a AR está rastreando */
-  rig.visible=ok&&S.ph!=='galeria';galG.visible=ok&&S.ph==='galeria';
+  rig.visible=ok&&S.ph!=='galeria'&&S.ph!=='paredes';galG.visible=ok&&S.ph==='galeria';
   if(S.galT>=0&&S.galT<1){S.galT=reduceMotion?1:Math.min(1,S.galT+dt/1.1);galG.scale.setScalar(Math.max(.001,easeBack(S.galT)));}
   glareM.visible=AR.glare;if(AR.glare)glareM.material.opacity=.75+.2*Math.sin(t*3);
   if(S.ph==='galeria'){galLeds.forEach((m,i)=>m.material.color.setHSL((t*.08+i*.25)%1,.75,.6));}
@@ -2903,7 +3051,7 @@ function loop(){
   /* chip de status */
   const cnt=!ok?(why==='glare'||why==='light'?3:why==='angle'||why==='off'?0:AR.marker>=0?PCOUNT[AR.marker]:0):ptsC.length;
   const msg={mk:AR.marker<0?'Procurando marcador…':AR.marker===0?'Poucos pontos: não reconheço':'Pontos repetidos: posição ambígua',light:'Pouca luz: não vejo os pontos',glare:'Reflexo no marcador',angle:'Ângulo inclinado demais',off:'Marcador fora da tela'};
-  chip.className=ok?'ok':'bad';chip.innerHTML=AR.inside?(vr.gyro?'Realidade virtual · giroscópio ligado':'Realidade virtual · arraste para olhar'):ok?`AR rastreando · <b>${cnt}</b> pontos`:`${msg[why]||''} · <b>${cnt}</b> pontos`;
+  chip.className=ok?'ok':'bad';chip.innerHTML=S.ph==='paredes'?(PW.found?'AR sem marcador · parede encontrada':`AR sem marcador · <b>${Math.round(PW.score)}</b> pontos na parede`):AR.inside?(vr.gyro?'Realidade virtual · giroscópio ligado':'Realidade virtual · arraste para olhar'):ok?`AR rastreando · <b>${cnt}</b> pontos`:`${msg[why]||''} · <b>${cnt}</b> pontos`;
   chip.style.display=(S.ph!=='inicio'&&S.ph!=='fim')?'block':'none';wl.style.display='none';
   /* celular no mundo real */
   phone.position.copy(camera.position);phone.quaternion.copy(camera.quaternion);
@@ -2911,13 +3059,14 @@ function loop(){
   cs.forEach((q,i)=>pa.set([cp.x,cp.y,cp.z,...q],i*6));rayL.geometry.attributes.position.needsUpdate=true;rayL.computeLineDistances();rayL.material.color.setHex(ok?0x36d399:0xff4f5e);
   /* desenho: tela do celular (tela cheia) + mundo real (janela) */
   const W=innerWidth,H=innerHeight;renderer.setScissorTest(false);renderer.setViewport(0,0,W,H);
+  if(S.ph==='paredes'&&!AR.inside){pwStep();PW.cam.aspect=W/H;if(CAM.on)PW.cam.fov=camera.fov;PW.cam.updateProjectionMatrix();renderer.toneMappingExposure=1.15;renderer.render(PW.scene,PW.cam);drawPts();return;}
   if(AR.inside){vr.cam.aspect=W/H;vr.cam.updateProjectionMatrix();renderer.toneMappingExposure=1.15;renderer.render(vr.scene,vr.cam);return;}
   renderer.render(scene,camera);
   if(wl.style.display==='block'){const r=wl.getBoundingClientRect(),y=H-r.bottom+2,x=r.left+2,w=r.width-4,hh=r.height-28;
     worldCam.aspect=w/hh;worldCam.updateProjectionMatrix();renderer.setScissorTest(true);renderer.setScissor(x,y,w,hh);renderer.setViewport(x,y,w,hh);renderer.render(scene,worldCam);renderer.setScissorTest(false);}
 }
 refreshArt();S.ph='inicio';dots();loop();
-window.__bitlab={CAM,scene,rig,THREE,S,AR,setPhase,chooseMarker,chooseScale,slotTap,select,ITEMS,controls,camera,anims,next};
+window.__bitlab={PW,vr,setVRCam,CAM,scene,rig,THREE,S,AR,setPhase,chooseMarker,chooseScale,slotTap,select,ITEMS,controls,camera,anims,next};
 })();
 
 </script>
