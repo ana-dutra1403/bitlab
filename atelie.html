@@ -279,7 +279,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
       <p class="note">Para jogar com a câmera, abra no celular, coloque o marcador Bit Lab impresso em cima da mesa e permita o acesso à câmera.</p>
       <h2 class="guides">As guias</h2>
       <div class="castrow" id="startCast"></div>
-      <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador e a busca de pontos na parede são de verdade. Os problemas de luz e reflexo da mesa, o cálculo do plano da parede e a fixação das obras (só pelo giroscópio, a 2 m de você) são simplificados. Sem câmera, tudo é simulado. Os números de pontos são ilustrativos.</p>
+      <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador e a busca de pontos na parede são de verdade. Os problemas de luz e reflexo da mesa, o cálculo do plano da parede (suposta a 1,5 m) e a fixação das obras (só pelo giroscópio) são simplificados. Sem câmera, tudo é simulado. Os números de pontos são ilustrativos.</p>
     </div>
   </div>
 </section>
@@ -2595,11 +2595,11 @@ function render(){
       `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+`<button class="ghost" id="inGame">Não abriu? Pendurar aqui no jogo</button>`+cardKey('wallOk');}
   else if(S.ph==='paredes'){h=board(0,'Obras na parede')+artRow();
     if(!PW.found){const pc=Math.min(100,Math.round(PW.score/WALL_N*100));
-      h+=say('rastreio',CAM.on?'Agora <b>sem marcador</b>! Aponte o celular para uma parede da sala, com o celular em pé. A câmera procura pontos de referência na própria parede.':'Agora <b>sem marcador</b>! Arraste para olhar a sala e mire o círculo do centro numa parede. A câmera procura pontos de referência na própria parede.')+
+      h+=say('rastreio',CAM.on?'Agora <b>sem marcador</b>! Fique a uns <b>1,5 m</b> de uma parede, segure o celular em pé e aponte para ela. A câmera procura pontos de referência na própria parede.':'Agora <b>sem marcador</b>! Arraste para olhar a sala e mire o círculo do centro numa parede. A câmera procura pontos de referência na própria parede.')+
         bar('Pontos de referência na parede',pc,pc>=100?'var(--ok)':pc>35?'var(--board)':'var(--bad)')+(PW.failSeen?cardKey('wallFail')+`<p class="fix">Mire perto de uma porta, quadro, interruptor ou canto e mexa o celular devagar.</p><button class="ghost" id="forceWall">Usar esta parede mesmo assim</button>`:'');}
     else{const n=Object.keys(PW.placed).length;
       h+=`<p class="okline">Parede encontrada · ${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.placed[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
-        (CAM.on?`<p>Mire o círculo num espaço livre da parede e toque na tela para pendurar <b>${PAINT[PW.sel].t}</b>.</p>`:`<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`)+arLink(PW.sel)+
+        (CAM.on?`<p>Mire o círculo num espaço livre da parede e toque na tela para pendurar <b>${PAINT[PW.sel].t}</b>.</p>`:`<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`)+
         `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+cardKey('wallOk');}}
   if(S.ph==='ligar'){h=board(8,'Ligar o computador')+artRow();
     if(!AR.tracked)h+=lostBox();
@@ -3025,17 +3025,18 @@ function pwStep(){if(PW.native)return;const now=performance.now(),dt=Math.min(.2
 function wallFound(){PW.found=true;PW.simPts.visible=false;ptsCv.getContext('2d').clearRect(0,0,ptsCv.width,ptsCv.height);
   const dir=new THREE.Vector3(0,0,-1).applyQuaternion(PW.cam.quaternion);dir.y=0;dir.normalize();
   let pos,n;if(!CAM.on&&PW.aimHit){pos=PW.aimHit.point.clone();n=PW.aimHit.face.normal.clone().transformDirection(PW.aimHit.object.matrixWorld);}
-  else{pos=PW.cam.position.clone().addScaledVector(dir,2.2);pos.y=1.5;n=dir.clone().negate();}
+  else{pos=PW.cam.position.clone().addScaledVector(dir,WALL_D);pos.y=PW.cam.position.y;n=dir.clone().negate();}
   PW.wallPlane=new THREE.Plane().setFromNormalAndCoplanarPoint(n,pos);
   PW.grid.position.copy(pos).addScaledVector(n,.01);PW.grid.lookAt(pos.clone().add(n));PW.grid.visible=true;
   setTimeout(()=>{if(PW.grid)PW.grid.material.opacity=.25;},2500);
   guide('lu','Parede encontrada','Achei pontos suficientes e calculei um plano em pé: a parede. Agora escolha uma obra e toque na parede para pendurar.',7000);render();}
 function hangPainting(k,pos,n){const P=PAINT[k];let g=PW.placed[k];if(g)PW.scene.remove(g);
   g=new THREE.Group();const w=cmW(k)/100,h=HCM[k]/100;
-  const fr=new THREE.Mesh(new THREE.BoxGeometry(w+.08,h+.08,.04),std(0x2a2620,.2,.5));g.add(fr);
-  const pic=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:paintTex(k),toneMapped:false}));pic.position.z=.022;g.add(pic);
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(w+.16,h+.16),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.28,depthWrite:false}));sh.position.set(.025,-.035,-.009);g.add(sh);
+  const fr=new THREE.Mesh(new THREE.BoxGeometry(w+.08,h+.08,.02),std(0x2a2620,.2,.5));g.add(fr);
+  const pic=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:paintTex(k),toneMapped:false}));pic.position.z=.012;g.add(pic);
   const pl=new THREE.Mesh(new THREE.PlaneGeometry(.36,.09),new THREE.MeshBasicMaterial({map:plaque(P.t,`${dimTxt(k)}`),toneMapped:false}));pl.position.set(0,-h/2-.12,.005);g.add(pl);
-  g.position.copy(pos).addScaledVector(n,.025);g.lookAt(g.position.clone().add(n));PW.scene.add(g);PW.placed[k]=g;
+  g.position.copy(pos).addScaledVector(n,.012);g.lookAt(g.position.clone().add(n));PW.scene.add(g);PW.placed[k]=g;
 
   guide(P.g,P.t,`${P.c} Tamanho real: ${dimTxt(k)}.`,9000);
   const nx=OBK.find(o=>!PW.placed[o]);if(nx)PW.sel=nx;render();}
@@ -3050,16 +3051,18 @@ renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='paredes'||!pwDow
   hangAtAim();});
 /* com a câmera: a obra vai para onde o círculo do centro aponta, de frente para você, a 2 m (o giroscópio só sabe a direção, não a distância) */
 const HANG_D=2.0,AIM_Y=.32;
+const WALL_D=1.5;
 function hangAtAim(){
   if(PW.pts.length<8){S.err++;toast('Aqui a parede está lisa demais: mire num lugar com textura.');return;}
   if(PW.beta!=null&&(PW.beta<45||PW.beta>135)){toast('Segure o celular em pé, de frente para a parede.');return;}
-  ray.setFromCamera({x:0,y:1-2*AIM_Y},PW.cam);const dir=ray.ray.direction.clone();const pitch=Math.asin(Math.max(-1,Math.min(1,dir.y)));dir.y=0;dir.normalize();
-  const k=PW.sel,w=cmW(k)/100;
-  for(const [o,g] of Object.entries(PW.placed)){if(o===k)continue;const d2=g.position.clone().sub(PW.cam.position);d2.y=0;d2.normalize();
-    const ang=Math.acos(Math.max(-1,Math.min(1,d2.dot(dir))));if(ang<(w/2+cmW(o)/200+.12)/HANG_D){toast('Já tem uma obra aí. Gire o celular para um espaço livre da parede.');return;}}
-  const pos=PW.cam.position.clone().addScaledVector(dir,HANG_D);pos.y=PW.cam.position.y+Math.max(-.5,Math.min(.5,Math.tan(pitch)*HANG_D));
-  hangPainting(k,pos,dir.clone().negate());}
-function enterWalls(){PW.native=CAM.on&&(QL||(ANDROID&&obrasFile===true));PW.real={};buildWalls();PW.lastT=0;$('#info').style.display='none';PW.found=false;PW.foundT=0;PW.lowT=0;PW.score=0;PW.pts=[];PW.failSeen=false;Object.values(PW.placed).forEach(g=>PW.scene.remove(g));PW.placed={};PW.sel='impressao';PW.grid.visible=false;
+  ray.setFromCamera({x:0,y:1-2*AIM_Y},PW.cam);const n=PW.wallPlane.normal.clone();
+  if(ray.ray.direction.dot(n)>-Math.cos(55*PI/180)){toast('Mire mais de frente para a parede encontrada.');return;}
+  const p=new THREE.Vector3();if(!ray.ray.intersectPlane(PW.wallPlane,p)){toast('Mire na parede encontrada.');return;}
+  const k=PW.sel,w=cmW(k)/100,h=HCM[k]/100;
+  for(const [o,g] of Object.entries(PW.placed)){if(o===k)continue;const d=g.position.clone().sub(p);const dy=Math.abs(d.y);d.y=0;
+    if(d.length()<(w+cmW(o)/100)/2+.08&&dy<(h+HCM[o]/100)/2+.08){toast('Já tem uma obra aí. Gire o celular para um espaço livre da parede.');return;}}
+  hangPainting(k,p,n);}
+function enterWalls(){PW.native=false;PW.real={};buildWalls();PW.lastT=0;$('#info').style.display='none';PW.found=false;PW.foundT=0;PW.lowT=0;PW.score=0;PW.pts=[];PW.failSeen=false;Object.values(PW.placed).forEach(g=>PW.scene.remove(g));PW.placed={};PW.sel='impressao';PW.grid.visible=false;
   PW.room.visible=!CAM.on;PW.scene.background=CAM.on?null:new THREE.Color(0xdcd8d0);ptsCv.style.display='block';
   vr.yaw=0;vr.pitch=-.05;vr.a0=null;vr.yawOff=0;setVRCam();
   if(vr.canGyro&&!vr.gyro)startGyro();}
