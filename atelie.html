@@ -142,6 +142,13 @@ input[type=range]{width:100%;accent-color:var(--board)}
 @media (max-width:760px){#panel .nomob{display:none}}
 @media (max-width:760px){body.cam #panel{max-height:40%}body.ph-paredes #panel{max-height:40%}}
 .okline{margin:0 0 8px;color:var(--ok);font-weight:600}
+#rvBanner{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;pointer-events:none;animation:rvIn .5s ease-out}
+#rvBanner.rv{background:rgba(236,111,168,.94);color:#1a0d14}#rvBanner.ra{background:rgba(59,123,224,.94);color:#fff}
+#rvBanner small{font-size:16px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+#rvBanner b{font-family:var(--display);font-size:clamp(34px,8vw,64px);line-height:1}
+#rvBanner span{font-size:18px;max-width:30ch}
+@keyframes rvIn{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#rvBanner{animation:none}}
 #panel .obsel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 #panel .ob{display:flex;flex-direction:column;gap:3px;align-items:stretch;text-align:left;background:var(--asphalt2);border:1px solid var(--line);border-radius:10px;padding:6px;color:#cdd6e2;font:inherit;cursor:pointer}
 #panel .ob img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px}
@@ -229,7 +236,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 .instr{font-size:17px}
 </style>
 </head>
-<body><video id="video" playsinline muted autoplay></video>
+<body><video id="video" playsinline muted autoplay></video><div id="rvBanner" role="status" aria-live="polite"></div>
 <div id="stage"></div>
 <div id="qr" hidden></div>
 <header>
@@ -2536,13 +2543,13 @@ function render(){
     h=board(0,'Mesa de ensaio')+say('marcador','Antes de ensaiar a montagem: em qual mesa o marcador vai ficar? O lugar muda como a câmera enxerga a folha.')+
       `<div class="places">${[['janela','Mesa perto da janela','O sol entra e sai'],['vidro','Mesa de vidro','Superfície brilhante'],['luminaria','Mesa com luminária','Luz constante e fosca']].map(([k,t,d])=>`<button class="plc ${P===k?(k==='luminaria'?'ok':'sel'):''}" data-place="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>`+
       (P?cardKey(P==='luminaria'?'plGood':'plRisk'):'')+`<button class="cta" id="next" ${P?'':'disabled'}>Colocar o marcador</button>`;}
-  if(S.ph==='galeria'){h=board(0,AR.inside?'Galeria 360°':'Portal da galeria')+(AR.inside?'':artRow());
+  if(S.ph==='galeria'){h=board(0,AR.inside?'Galeria 360° · RV':'Portal da galeria')+(AR.inside?'':artRow());
     if(!AR.tracked)h+=lostBox();
     else if(AR.inside)h+=`<div class="nomob">`+say('camera','Bem-vinda à exposição de Monet! Gire o celular ou arraste a tela para olhar em volta e toque nas obras.')+`</div>`+
 
-      (vr.canGyro&&!vr.gyro?`<button class="ghost" id="gyroBtn">Usar o giroscópio do celular</button>`:'')+`<button class="ghost" id="exitGal">Voltar para a AR</button><button class="cta" id="finish">Ver o resultado</button>`;
-    else h+=say('rastreio','Volte a apontar para o marcador: o computador abriu ali um portal para a galeria completa, que não cabe na sala. Atravesse para entrar.')+
-`<button class="cta go" id="enterGal">Atravessar o portal</button><button class="cta" id="finish">Ver o resultado</button>`;}
+      (vr.canGyro&&!vr.gyro?`<button class="ghost" id="gyroBtn">Usar o giroscópio do celular</button>`:'')+`<button class="ghost" id="exitGal">Sair da RV e voltar para a RA</button><button class="cta" id="finish">Ver o resultado</button>`;
+    else h+=say('rastreio','Volte a apontar para o marcador: o computador abriu ali um portal para a galeria completa, que não cabe na sala.')+`<div class="card warn"><h4>Atenção: aqui muda a tecnologia</h4><p>Ao atravessar o portal, você <b>sai da realidade aumentada</b> e entra na <b>realidade virtual</b>. A câmera desliga, o mundo real some da tela e tudo o que você vê passa a ser digital.</p></div>`+
+`<button class="cta go" id="enterGal">Atravessar o portal e entrar na RV</button><button class="cta" id="finish">Ver o resultado</button>`;}
   if(S.ph==='reconhecer'&&CAM.on){
     h=board(1,'Reconhecimento')+artRow()+say('camera',CAMTXT.recog)+
       (AR.recog?cardKey('mkC'):`<p class="fix">Procurando o marcador… deixe a folha inteira na parte de cima da tela, com boa luz.</p>`)+
@@ -2578,10 +2585,16 @@ function render(){
         if(both&&S.ramSpeed<100)h+=`<button class="ghost" id="reram">Tirar os pentes e tentar de novo</button>`;
         h+=`<button class="cta" id="next" ${both&&S.ramSpeed>=85&&S.placed.gpu?'':'disabled'}>Próxima fase</button>`;}
     }}
-  if(S.ph==='paredes'){h=board(0,'Obras na parede')+artRow();
+  if(S.ph==='paredes'&&PW.native){const n=Object.keys(PW.real).length;
+    h=board(0,'Obras na parede')+artRow()+say('rastreio','Agora é <b>RA sem marcador</b>, feita pela RA do próprio celular. Escolha uma obra e toque em <b>Pendurar na parede</b>. O celular procura pontos na parede, calcula o plano dela e prende a obra ali: ela fica parada mesmo se você andar.')+
+      `<p class="fix">Se ele demorar para achar a parede, mexa o celular devagar de um lado para o outro e mire perto de uma porta, quadro, interruptor ou canto. Depois volte para o jogo.</p>`+
+      `<p class="okline">${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.real[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
+      arLink(PW.sel,'Pendurar na parede: '+PAINT[PW.sel].t)+
+      `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+cardKey('wallOk');}
+  else if(S.ph==='paredes'){h=board(0,'Obras na parede')+artRow();
     if(!PW.found){const pc=Math.min(100,Math.round(PW.score/WALL_N*100));
       h+=say('rastreio',CAM.on?'Agora <b>sem marcador</b>! Aponte o celular para uma parede da sala, com o celular em pé. A câmera procura pontos de referência na própria parede.':'Agora <b>sem marcador</b>! Arraste para olhar a sala e mire o círculo do centro numa parede. A câmera procura pontos de referência na própria parede.')+
-        bar('Pontos de referência na parede',pc,pc>=100?'var(--ok)':pc>35?'var(--board)':'var(--bad)')+(PW.failSeen?cardKey('wallFail'):'');}
+        bar('Pontos de referência na parede',pc,pc>=100?'var(--ok)':pc>35?'var(--board)':'var(--bad)')+(PW.failSeen?cardKey('wallFail')+`<p class="fix">Mire perto de uma porta, quadro, interruptor ou canto e mexa o celular devagar.</p><button class="ghost" id="forceWall">Usar esta parede mesmo assim</button>`:'');}
     else{const n=Object.keys(PW.placed).length;
       h+=`<p class="okline">Parede encontrada · ${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.placed[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
         (CAM.on?`<p>Mire o círculo num espaço livre da parede e toque na tela para pendurar <b>${PAINT[PW.sel].t}</b>.</p>`:`<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`)+arLink(PW.sel)+
@@ -2599,6 +2612,8 @@ function render(){
   panel.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>chooseMarker(+b.dataset.mk));
   panel.querySelectorAll('[data-cm]').forEach(b=>b.onclick=()=>chooseScale(+b.dataset.cm));
   const nx=$('#next');if(nx)nx.onclick=next;
+  const fw=$('#forceWall');if(fw)fw.onclick=()=>{wallFound();toast('Parede aceita: com poucos pontos, a obra pode ficar menos firme.');};
+  panel.querySelectorAll('[data-hang]').forEach(a=>a.addEventListener('click',()=>{PW.real[a.dataset.hang]=true;setTimeout(render,400);}));
   panel.querySelectorAll('[data-psu]').forEach(b=>b.onclick=()=>choosePSU(+b.dataset.psu));
   panel.querySelectorAll('[data-ob]').forEach(b=>b.onclick=()=>{PW.sel=b.dataset.ob;render();});
   const rr=$('#reram');if(rr)rr.onclick=resetRAM;
@@ -2731,8 +2746,9 @@ function buildVR(){if(vr.built)return;vr.built=true;const sc=vr.scene;sc.environ
   A(rbox(1.6,.1,.45,.03),std(0x7a5236,0,.55),[0,.45,2.2]);A(box(.08,.42,.4),dark,[-.65,.21,2.2]);A(box(.08,.42,.4),dark,[.65,.21,2.2]);}
 const lookCam=()=>S.ph==='paredes'&&!AR.inside?PW.cam:vr.cam;
 function setVRCam(){lookCam().quaternion.setFromEuler(new THREE.Euler(vr.pitch,vr.yaw,0,'YXZ'));}
-function enterGallery(){vr.a0=null;vr.yawOff=0;if(vr.canGyro&&!vr.gyro)startGyro();buildVR();AR.inside=true;AR.obra=null;vr.yaw=0;vr.pitch=0;setVRCam();controls.enabled=false;if(CAM.on)video.style.display='none';render();if(!AR.vrTold){AR.vrTold=true;setTimeout(()=>guide('lu','Agora é realidade virtual','Gire o celular e o corpo para olhar a sala inteira. A mesa e o marcador sumiram: na AR, o desenho aparecia por cima do mundo real. Aqui, tudo é digital, e o celular só usa o giroscópio para saber para onde você virou.',11000),700);}}
-function exitGallery(silent){if(!AR.inside&&!silent)return;AR.inside=false;controls.enabled=!CAM.on;if(CAM.on){video.style.display='block';CAM.seen=-1e9;}stopGyro();if(!silent)render();}
+function rvBanner(on){const b=$('#rvBanner');if(!b)return;b.innerHTML=on?'<small>Você saiu da realidade aumentada</small><b>Agora é realidade virtual</b><span>A câmera desligou. Tudo ao seu redor é digital, e o celular só usa o giroscópio para saber para onde você virou.</span>':'<small>Você saiu da realidade virtual</small><b>De volta à realidade aumentada</b><span>A câmera ligou de novo e o desenho volta a aparecer por cima do mundo real.</span>';b.className=on?'rv':'ra';b.style.display='flex';clearTimeout(rvBanner.t);rvBanner.t=setTimeout(()=>b.style.display='none',3200);}
+function enterGallery(){rvBanner(true);vr.a0=null;vr.yawOff=0;if(vr.canGyro&&!vr.gyro)startGyro();buildVR();AR.inside=true;AR.obra=null;vr.yaw=0;vr.pitch=0;setVRCam();controls.enabled=false;if(CAM.on)video.style.display='none';render();if(!AR.vrTold){AR.vrTold=true;setTimeout(()=>guide('lu','Agora é realidade virtual','Gire o celular e o corpo para olhar a sala inteira. A mesa e o marcador sumiram: na AR, o desenho aparecia por cima do mundo real. Aqui, tudo é digital, e o celular só usa o giroscópio para saber para onde você virou.',11000),700);}}
+function exitGallery(silent){if(!AR.inside&&!silent)return;if(!silent)rvBanner(false);AR.inside=false;controls.enabled=!CAM.on;if(CAM.on){video.style.display='block';CAM.seen=-1e9;}stopGyro();if(!silent)render();}
 /* arrastar para olhar em volta */
 let vrDrag=null;
 renderer.domElement.addEventListener('pointerdown',e=>{if(AR.inside||S.ph==='paredes')vrDrag=[e.clientX,e.clientY,vr.yaw,vr.pitch,vr.yawOff||0];});
@@ -2897,7 +2913,7 @@ $('#startCam').onclick=beginCam;
 /* Com câmera: os pontos de referência da parede são achados de verdade na imagem (cantos e texturas);
    o plano da parede e a fixação da obra usam o giroscópio (3 graus de liberdade), uma simplificação.
    Sem câmera: uma sala de aula simulada, com uma parede lisa (falha) e paredes com textura (funcionam). */
-const PW={scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(65,1,.05,60),built:false,found:false,foundT:0,lowT:0,score:0,pts:[],
+const PW={native:false,real:{},scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(65,1,.05,60),built:false,found:false,foundT:0,lowT:0,score:0,pts:[],
   sel:'impressao',placed:{},failSeen:false,room:new THREE.Group(),wallPlane:null,grid:null,beta:null,lastScan:0,aimTex:null};
 PW.cam.position.set(0,1.5,0);
 /* tamanhos reais (altura x largura, cm) segundo os museus; Crisântemos: tamanho aproximado */
@@ -2910,10 +2926,10 @@ const thumbs={};function thumbURL(k){if(thumbs[k])return thumbs[k];const c=docum
   const u=c.toDataURL('image/jpeg',.8);if(PIMG[k])thumbs[k]=u;return u;}
 const QL=(()=>{try{return document.createElement('a').relList.supports('ar');}catch(e){return false;}})();
 const ANDROID=/android/i.test(navigator.userAgent);
-function arLink(k){const P=PAINT[k];
-  if(QL)return `<a rel="ar" class="qlbtn" href="obras/${k}.usdz#allowsContentScaling=0"><img src="${thumbURL(k)}" alt="">Pendurar na minha parede de verdade</a>`;
+function arLink(k,label){const P=PAINT[k];label=label||'Pendurar na minha parede de verdade';
+  if(QL)return `<a rel="ar" class="qlbtn" data-hang="${k}" href="obras/${k}.usdz#allowsContentScaling=0"><img src="${thumbURL(k)}" alt="">${label}</a>`;
   if(ANDROID){const f=new URL('obras/'+k+'.glb',location.href).href;
-    return `<a class="qlbtn" href="intent://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(f)}&mode=ar_only&enable_vertical_placement=true&title=${encodeURIComponent(P.t)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;"><img src="${thumbURL(k)}" alt="">Pendurar na minha parede de verdade</a>`;}
+    return `<a class="qlbtn" href="intent://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(f)}&mode=ar_only&enable_vertical_placement=true&title=${encodeURIComponent(P.t)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;" data-hang="${k}"><img src="${thumbURL(k)}" alt="">${label}</a>`;}
   return `<p class="fix">No celular, aqui aparece o botão <b>Pendurar na minha parede de verdade</b>, que abre a obra no visualizador de realidade aumentada do aparelho, presa a uma parede real.</p>`;}
 function buildWalls(){if(PW.built)return;PW.built=true;const sc=PW.scene;sc.environment=envMap;
   sc.add(new THREE.HemisphereLight(0xfffaf0,0x404048,1.0));const dl=new THREE.DirectionalLight(0xffffff,.5);dl.position.set(1,3,2);sc.add(dl);
@@ -2950,15 +2966,15 @@ function featureScan(){const vw=video.videoWidth,vh=video.videoHeight;if(!vw||vi
   for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=d[j]*.3+d[j+1]*.59+d[j+2]*.11;
   const C=8,pts=[];for(let cy=1;cy<Math.floor(h/C)-1;cy++)for(let cx=1;cx<Math.floor(w/C)-1;cx++){let best=0,bx=0,by=0;
     for(let y=cy*C;y<cy*C+C;y++)for(let x=cx*C;x<cx*C+C;x++){const i=y*w+x;const gx=g[i+1]-g[i-1],gy=g[i+w]-g[i-w];const m=Math.min(Math.abs(gx),Math.abs(gy));if(m>best){best=m;bx=x;by=y;}}
-    if(best>16)pts.push([bx/w,by/h]);}
+    if(best>10)pts.push([bx/w,by/h]);}
   return pts;}
 const ptsCv=document.createElement('canvas');ptsCv.id='ptsCv';ptsCv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;display:none';document.body.appendChild(ptsCv);
 function drawPts(){const W=innerWidth,H=innerHeight;if(ptsCv.width!==W||ptsCv.height!==H){ptsCv.width=W;ptsCv.height=H;}const g=ptsCv.getContext('2d');g.clearRect(0,0,W,H);
-  if(!CAM.on)return;const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;const s=Math.max(W/vw,H/vh);g.fillStyle='#36d399';
+  if(!CAM.on||PW.native)return;const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;const s=Math.max(W/vw,H/vh);g.fillStyle='#36d399';
   if(!PW.found)PW.pts.forEach(([u,v])=>{const x=(u*vw-vw/2)*s+W/2,y=(v*vh-vh/2)*s+H/2;g.fillRect(x-3,y-3,6,6);});
   g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2;g.beginPath();g.arc(W/2,H*AIM_Y,18,0,7);g.stroke();}
-const WALL_N=40;
-function pwStep(){const now=performance.now(),dt=Math.min(.25,(now-(PW.lastT||now))/1000);PW.lastT=now;
+const WALL_N=24;
+function pwStep(){if(PW.native)return;const now=performance.now(),dt=Math.min(.25,(now-(PW.lastT||now))/1000);PW.lastT=now;
   if(PW.found&&CAM.on&&performance.now()-PW.lastScan>300){PW.lastScan=performance.now();PW.pts=featureScan();}
   if(!PW.found){let sc=0;
     if(CAM.on){if(performance.now()-PW.lastScan>120){PW.lastScan=performance.now();PW.pts=featureScan();}sc=PW.pts.length;
@@ -2989,7 +3005,7 @@ function hangPainting(k,pos,n){const P=PAINT[k];let g=PW.placed[k];if(g)PW.scene
   const nx=OBK.find(o=>!PW.placed[o]);if(nx)PW.sel=nx;render();}
 let pwDown=null;
 renderer.domElement.addEventListener('pointerdown',e=>{if(S.ph==='paredes')pwDown=[e.clientX,e.clientY];});
-renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='paredes'||!pwDown)return;const moved=Math.hypot(e.clientX-pwDown[0],e.clientY-pwDown[1]);pwDown=null;if(moved>8)return;
+renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='paredes'||!pwDown||PW.native)return;const moved=Math.hypot(e.clientX-pwDown[0],e.clientY-pwDown[1]);pwDown=null;if(moved>8)return;
   if(!PW.found){toast(CAM.on?'Primeiro aponte para uma parede até ela ser encontrada.':'Primeiro mire o centro da tela numa parede até ela ser encontrada.');return;}
   const r=renderer.domElement.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},PW.cam);
   if(!CAM.on){const hit=ray.intersectObjects(PW.room.children,false).find(h=>h.object.userData.wall);if(!hit)return;
@@ -2999,7 +3015,7 @@ renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='paredes'||!pwDow
 /* com a câmera: a obra vai para onde o círculo do centro aponta, de frente para você, a 2 m (o giroscópio só sabe a direção, não a distância) */
 const HANG_D=2.0,AIM_Y=.32;
 function hangAtAim(){
-  if(PW.pts.length<18){S.err++;toast('Aqui a parede está lisa demais: mire num lugar com textura.');return;}
+  if(PW.pts.length<8){S.err++;toast('Aqui a parede está lisa demais: mire num lugar com textura.');return;}
   if(PW.beta!=null&&(PW.beta<45||PW.beta>135)){toast('Segure o celular em pé, de frente para a parede.');return;}
   ray.setFromCamera({x:0,y:1-2*AIM_Y},PW.cam);const dir=ray.ray.direction.clone();const pitch=Math.asin(Math.max(-1,Math.min(1,dir.y)));dir.y=0;dir.normalize();
   const k=PW.sel,w=cmW(k)/100;
@@ -3007,7 +3023,7 @@ function hangAtAim(){
     const ang=Math.acos(Math.max(-1,Math.min(1,d2.dot(dir))));if(ang<(w/2+cmW(o)/200+.12)/HANG_D){toast('Já tem uma obra aí. Gire o celular para um espaço livre da parede.');return;}}
   const pos=PW.cam.position.clone().addScaledVector(dir,HANG_D);pos.y=PW.cam.position.y+Math.max(-.5,Math.min(.5,Math.tan(pitch)*HANG_D));
   hangPainting(k,pos,dir.clone().negate());}
-function enterWalls(){buildWalls();PW.lastT=0;$('#info').style.display='none';PW.found=false;PW.foundT=0;PW.lowT=0;PW.score=0;PW.pts=[];PW.failSeen=false;Object.values(PW.placed).forEach(g=>PW.scene.remove(g));PW.placed={};PW.sel='impressao';PW.grid.visible=false;
+function enterWalls(){PW.native=CAM.on&&(QL||ANDROID);PW.real={};buildWalls();PW.lastT=0;$('#info').style.display='none';PW.found=false;PW.foundT=0;PW.lowT=0;PW.score=0;PW.pts=[];PW.failSeen=false;Object.values(PW.placed).forEach(g=>PW.scene.remove(g));PW.placed={};PW.sel='impressao';PW.grid.visible=false;
   PW.room.visible=!CAM.on;PW.scene.background=CAM.on?null:new THREE.Color(0xdcd8d0);ptsCv.style.display='block';
   vr.yaw=0;vr.pitch=-.05;vr.a0=null;vr.yawOff=0;setVRCam();
   if(vr.canGyro&&!vr.gyro)startGyro();}
@@ -3069,7 +3085,7 @@ function loop(){
   /* chip de status */
   const cnt=!ok?(why==='glare'||why==='light'?3:why==='angle'||why==='off'?0:AR.marker>=0?PCOUNT[AR.marker]:0):ptsC.length;
   const msg={mk:AR.marker<0?'Procurando marcador…':AR.marker===0?'Poucos pontos: não reconheço':'Pontos repetidos: posição ambígua',light:'Pouca luz: não vejo os pontos',glare:'Reflexo no marcador',angle:'Ângulo inclinado demais',off:'Marcador fora da tela'};
-  chip.className=ok?'ok':'bad';chip.innerHTML=S.ph==='paredes'?(PW.found?'AR sem marcador · parede encontrada':`AR sem marcador · <b>${Math.round(PW.score)}</b> pontos na parede`):AR.inside?(vr.gyro?'Realidade virtual · giroscópio ligado':'Realidade virtual · arraste para olhar'):ok?`AR rastreando · <b>${cnt}</b> pontos`:`${msg[why]||''} · <b>${cnt}</b> pontos`;
+  chip.className=ok?'ok':'bad';chip.innerHTML=S.ph==='paredes'?(PW.native?'RA sem marcador · RA do próprio celular':PW.found?'AR sem marcador · parede encontrada':`AR sem marcador · <b>${Math.round(PW.score)}</b> pontos na parede`):AR.inside?(vr.gyro?'Realidade virtual · giroscópio ligado':'Realidade virtual · arraste para olhar'):ok?`AR rastreando · <b>${cnt}</b> pontos`:`${msg[why]||''} · <b>${cnt}</b> pontos`;
   chip.style.display=(S.ph!=='inicio'&&S.ph!=='fim')?'block':'none';wl.style.display='none';
   /* celular no mundo real */
   phone.position.copy(camera.position);phone.quaternion.copy(camera.quaternion);
