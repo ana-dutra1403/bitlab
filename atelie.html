@@ -201,9 +201,11 @@ input[type=range]{width:100%;accent-color:var(--board)}
 .castrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
 .cast{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 6px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
 .cast b{font-family:var(--display);font-size:16px}.cast small{color:var(--mut);font-size:13px}
-.rules{padding-left:20px;color:#cdd6e2;margin:0}.rules li{margin:4px 0}
+.rules{padding-left:20px;color:#cdd6e2;margin:0}.rules li{margin:6px 0}
+.rulebox{margin:18px 0 4px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.04)}
+.rulebox h2,.guides{font-family:var(--display);font-size:22px;margin:0 0 8px;color:var(--board)}.guides{margin-top:24px}
 .endart{width:100%;max-width:640px;border-radius:12px;display:block;margin:6px 0 4px;border:1px solid var(--line)}
-@media (max-width:760px){.wx{display:none}#worldBox{left:auto;right:10px;top:104px;bottom:auto;width:150px;height:118px}#arChip{top:58px;font-size:13px}.castrow{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){.wx{display:none}#worldBox{left:auto;right:10px;top:104px;bottom:auto;width:150px;height:118px}#arChip{top:58px;font-size:13px}.castrow{grid-template-columns:repeat(4,1fr);gap:6px}.cast{padding:8px 2px}.cast small{display:none}.cast img{width:48px;height:48px}.cast b{font-size:12px}}
 
 .say small.role{color:var(--mut);font-size:13px}
 .places{display:grid;gap:8px;margin-bottom:12px}
@@ -252,18 +254,23 @@ input[type=range]{width:100%;accent-color:var(--board)}
   <div class="wrap one">
     <div>
       <h1>Bit Lab<small>Ateliê em realidade aumentada</small></h1>
-      <p class="lead">A escola ganhou peças doadas para montar o seu primeiro computador. Só que elas são caras e frágeis: um erro e queimam. Por isso o Ateliê Bit Lab ensaia a montagem em realidade aumentada, sobre uma folha na mesa. O computador montado tem uma missão: abrir a primeira exposição da escola, com obras de Claude Monet que nunca vieram à cidade. Quando ele liga, as obras saem da tela e vão para as paredes da sala.</p>
-      <div class="castrow" id="startCast"></div>
-      <ul class="rules">
-        <li><b>Objetivo:</b> ensaiar a montagem do PC sobre o marcador, ligar o computador e pendurar as obras de Monet nas paredes da sala.</li>
-        <li><b>Como jogar:</b> com a câmera, aponte o celular para o marcador impresso e mova o celular de verdade. Sem câmera, arraste a tela para mover o celular. Toque nas peças e nos botões do painel.</li>
-        <li><b>Regra principal:</b> o PC só aparece enquanto a AR enxerga o marcador. As obras só vão para a parede quando a AR encontra pontos de referência nela.</li>
-        <li><b>A AR perde o marcador quando:</b> ele sai da tela, o celular fica rente à mesa, falta luz ou um reflexo cobre os cantos.</li>
-        <li><b>Placar:</b> cada erro e cada vez que a AR perde o marcador contam no resultado final.</li>
-      </ul>
+      <p class="lead">A escola ganhou peças doadas para montar o primeiro computador, mas elas são caras e frágeis. O Ateliê Bit Lab ensaia a montagem em realidade aumentada e, com o PC ligado, leva obras de Monet para as paredes da sala.</p>
+      <div class="rulebox">
+        <h2>Regras do jogo</h2>
+        <ul class="rules">
+          <li><b>Objetivo:</b> montar o PC sobre o marcador, ligar o computador e pendurar 3 obras de Monet nas paredes.</li>
+          <li><b>Como jogar:</b> com a câmera, aponte para o marcador impresso e mova o celular de verdade. Sem câmera, arraste a tela. Toque nas peças e nos botões do painel.</li>
+          <li><b>Regra principal:</b> o PC só aparece enquanto a AR enxerga o marcador. Uma obra só vai para a parede se a AR encontrar pontos de referência nela.</li>
+          <li><b>A AR perde o marcador quando:</b> ele sai da tela, o celular fica rente à mesa, falta luz ou um reflexo cobre os cantos.</li>
+          <li><b>Placar:</b> cada erro e cada vez que a AR perde o marcador contam no resultado final.</li>
+          <li><b>Fim:</b> o jogo termina quando você visita a galeria 360° e abre o resultado.</li>
+        </ul>
+      </div>
       <div class="actions"><button class="cta go" id="startCam">Jogar com a câmera (AR de verdade)</button><button class="ghost" id="start3D">Jogar sem câmera (simulação)</button></div>
       <p class="note">Para jogar com a câmera, abra no celular, coloque o marcador Bit Lab impresso em cima da mesa e permita o acesso à câmera.</p>
-      <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador e a busca de pontos na parede são de verdade. Os problemas de luz e reflexo da mesa, o cálculo do plano da parede e a fixação das obras (só pelo giroscópio) são simplificados. Sem câmera, tudo é simulado. Os números de pontos são ilustrativos.</p>
+      <h2 class="guides">As guias</h2>
+      <div class="castrow" id="startCast"></div>
+      <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador e a busca de pontos na parede são de verdade. Os problemas de luz e reflexo da mesa, o cálculo do plano da parede e a fixação das obras (só pelo giroscópio, a 2 m de você) são simplificados. Sem câmera, tudo é simulado. Os números de pontos são ilustrativos.</p>
     </div>
   </div>
 </section>
@@ -2577,7 +2584,7 @@ function render(){
         bar('Pontos de referência na parede',pc,pc>=100?'var(--ok)':pc>35?'var(--board)':'var(--bad)')+(PW.failSeen?cardKey('wallFail'):'');}
     else{const n=Object.keys(PW.placed).length;
       h+=`<p class="okline">Parede encontrada · ${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.placed[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
-        `<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`+arLink(PW.sel)+
+        (CAM.on?`<p>Mire o círculo num espaço livre da parede e toque na tela para pendurar <b>${PAINT[PW.sel].t}</b>.</p>`:`<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`)+arLink(PW.sel)+
         `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+cardKey('wallOk');}}
   if(S.ph==='ligar'){h=board(8,'Ligar o computador')+artRow();
     if(!AR.tracked)h+=lostBox();
@@ -2947,11 +2954,12 @@ function featureScan(){const vw=video.videoWidth,vh=video.videoHeight;if(!vw||vi
   return pts;}
 const ptsCv=document.createElement('canvas');ptsCv.id='ptsCv';ptsCv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;display:none';document.body.appendChild(ptsCv);
 function drawPts(){const W=innerWidth,H=innerHeight;if(ptsCv.width!==W||ptsCv.height!==H){ptsCv.width=W;ptsCv.height=H;}const g=ptsCv.getContext('2d');g.clearRect(0,0,W,H);
-  if(!CAM.on||PW.found)return;const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;const s=Math.max(W/vw,H/vh);g.fillStyle='#36d399';
-  PW.pts.forEach(([u,v])=>{const x=(u*vw-vw/2)*s+W/2,y=(v*vh-vh/2)*s+H/2;g.fillRect(x-3,y-3,6,6);});
-  g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2;g.beginPath();g.arc(W/2,H*.32,18,0,7);g.stroke();}
+  if(!CAM.on)return;const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;const s=Math.max(W/vw,H/vh);g.fillStyle='#36d399';
+  if(!PW.found)PW.pts.forEach(([u,v])=>{const x=(u*vw-vw/2)*s+W/2,y=(v*vh-vh/2)*s+H/2;g.fillRect(x-3,y-3,6,6);});
+  g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2;g.beginPath();g.arc(W/2,H*AIM_Y,18,0,7);g.stroke();}
 const WALL_N=40;
 function pwStep(){const now=performance.now(),dt=Math.min(.25,(now-(PW.lastT||now))/1000);PW.lastT=now;
+  if(PW.found&&CAM.on&&performance.now()-PW.lastScan>300){PW.lastScan=performance.now();PW.pts=featureScan();}
   if(!PW.found){let sc=0;
     if(CAM.on){if(performance.now()-PW.lastScan>120){PW.lastScan=performance.now();PW.pts=featureScan();}sc=PW.pts.length;
       if(PW.beta!=null&&(PW.beta<45||PW.beta>135))sc=Math.min(sc,8);}
@@ -2987,8 +2995,18 @@ renderer.domElement.addEventListener('pointerup',e=>{if(S.ph!=='paredes'||!pwDow
   if(!CAM.on){const hit=ray.intersectObjects(PW.room.children,false).find(h=>h.object.userData.wall);if(!hit)return;
     if(!hit.object.userData.tex){toast('Essa parede é lisa: a AR não achou pontos para prender a obra ali.');S.err++;return;}
     hangPainting(PW.sel,hit.point,hit.face.normal.clone().transformDirection(hit.object.matrixWorld));return;}
-  const p=new THREE.Vector3();if(!ray.ray.intersectPlane(PW.wallPlane,p)||p.distanceTo(PW.cam.position)>8){toast('Toque em cima da parede encontrada.');return;}
-  hangPainting(PW.sel,p,PW.wallPlane.normal.clone());});
+  hangAtAim();});
+/* com a câmera: a obra vai para onde o círculo do centro aponta, de frente para você, a 2 m (o giroscópio só sabe a direção, não a distância) */
+const HANG_D=2.0,AIM_Y=.32;
+function hangAtAim(){
+  if(PW.pts.length<18){S.err++;toast('Aqui a parede está lisa demais: mire num lugar com textura.');return;}
+  if(PW.beta!=null&&(PW.beta<45||PW.beta>135)){toast('Segure o celular em pé, de frente para a parede.');return;}
+  ray.setFromCamera({x:0,y:1-2*AIM_Y},PW.cam);const dir=ray.ray.direction.clone();const pitch=Math.asin(Math.max(-1,Math.min(1,dir.y)));dir.y=0;dir.normalize();
+  const k=PW.sel,w=cmW(k)/100;
+  for(const [o,g] of Object.entries(PW.placed)){if(o===k)continue;const d2=g.position.clone().sub(PW.cam.position);d2.y=0;d2.normalize();
+    const ang=Math.acos(Math.max(-1,Math.min(1,d2.dot(dir))));if(ang<(w/2+cmW(o)/200+.12)/HANG_D){toast('Já tem uma obra aí. Gire o celular para um espaço livre da parede.');return;}}
+  const pos=PW.cam.position.clone().addScaledVector(dir,HANG_D);pos.y=PW.cam.position.y+Math.max(-.5,Math.min(.5,Math.tan(pitch)*HANG_D));
+  hangPainting(k,pos,dir.clone().negate());}
 function enterWalls(){buildWalls();PW.lastT=0;$('#info').style.display='none';PW.found=false;PW.foundT=0;PW.lowT=0;PW.score=0;PW.pts=[];PW.failSeen=false;Object.values(PW.placed).forEach(g=>PW.scene.remove(g));PW.placed={};PW.sel='impressao';PW.grid.visible=false;
   PW.room.visible=!CAM.on;PW.scene.background=CAM.on?null:new THREE.Color(0xdcd8d0);ptsCv.style.display='block';
   vr.yaw=0;vr.pitch=-.05;vr.a0=null;vr.yawOff=0;setVRCam();
