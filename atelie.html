@@ -142,6 +142,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 @media (max-width:760px){#panel .nomob{display:none}}
 @media (max-width:760px){body.cam #panel{max-height:40%}body.ph-paredes #panel{max-height:40%}}
 .okline{margin:0 0 8px;color:var(--ok);font-weight:600}
+.camerr{margin:12px 0 0;padding:12px 14px;border-radius:10px;background:rgba(255,79,94,.14);border:1px solid rgba(255,79,94,.5);color:#ffd7db;font-size:15px}
 #rvBanner{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;pointer-events:none;animation:rvIn .5s ease-out}
 #rvBanner.rv{background:rgba(236,111,168,.94);color:#1a0d14}#rvBanner.ra{background:rgba(59,123,224,.94);color:#fff}
 #rvBanner small{font-size:16px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
@@ -274,6 +275,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
         </ul>
       </div>
       <div class="actions"><button class="cta go" id="startCam">Jogar com a câmera (AR de verdade)</button><button class="ghost" id="start3D">Jogar sem câmera (simulação)</button></div>
+      <p class="camerr" id="camMsg" role="alert" style="display:none"></p>
       <p class="note">Para jogar com a câmera, abra no celular, coloque o marcador Bit Lab impresso em cima da mesa e permita o acesso à câmera.</p>
       <h2 class="guides">As guias</h2>
       <div class="castrow" id="startCast"></div>
@@ -2902,9 +2904,26 @@ const CAMTXT={
   hintR:['ar','Gire a folha ou ande em volta dela com o celular. Depois abaixe o celular até ficar quase rente à mesa.'],
   lostOff:['al','Aponte a câmera para o marcador: a folha inteira precisa aparecer na parte de cima da tela.'],
   fixOff:'Aponte a câmera para o marcador Bit Lab, com a folha inteira aparecendo na parte de cima da tela.'};
-async function beginCam(){const b=$('#startCam');b.disabled=true;b.textContent='Abrindo a câmera…';
-  const ok=await startCamera();b.disabled=false;b.textContent='Jogar com a câmera (AR de verdade)';
-  if(!ok){toast('Não consegui abrir a câmera. Confira se o site tem permissão. Seguindo sem câmera.',4500);CAM.on=false;begin();return;}
+/* abre a câmera com prazo: se o celular não responder, avisa em vez de ficar carregando para sempre */
+const withT=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
+async function camOpen(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return 'nosupport';
+  try{if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
+    let st;try{st=await withT(navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false}),15000);}
+    catch(e){if(e&&e.name==='OverconstrainedError')st=await withT(navigator.mediaDevices.getUserMedia({video:true,audio:false}),15000);else throw e;}
+    video.muted=true;video.setAttribute('playsinline','');video.setAttribute('muted','');video.srcObject=st;video.style.display='block';
+    try{await withT(video.play(),4000);}catch(e){}
+    await withT(new Promise(r=>{if(video.readyState>=1)r();else video.addEventListener('loadedmetadata',()=>r(),{once:true});}),6000);
+    return 'ok';}
+  catch(e){video.style.display='none';return e&&(e.name==='NotAllowedError'||e.name==='SecurityError')?'denied':e&&e.message==='timeout'?'timeout':e&&(e.name==='NotReadableError'||e.name==='AbortError')?'busy':'error';}}
+const CAMERR={denied:'O celular não deu permissão para a câmera. No iPhone: Ajustes › Apps › Safari › Câmera › Permitir (ou toque em "aA" na barra do endereço › Ajustes do Site › Câmera). Depois recarregue a página.',
+  timeout:'A câmera não respondeu. Feche os apps que podem estar usando a câmera (WhatsApp, chamadas de vídeo, Instagram), recarregue a página e tente de novo.',
+  busy:'A câmera está ocupada por outro app. Feche chamadas de vídeo e apps de câmera e tente de novo.',
+  nosupport:'Este navegador não libera a câmera. Abra o link direto no Safari (iPhone) ou no Chrome (Android), não por dentro do WhatsApp ou Instagram.',
+  error:'Não consegui abrir a câmera. Recarregue a página e tente de novo.'};
+async function beginCam(){const b=$('#startCam'),m=$('#camMsg');b.disabled=true;b.textContent='Abrindo a câmera…';if(m)m.style.display='none';
+  const r=await camOpen();b.disabled=false;b.textContent='Jogar com a câmera (AR de verdade)';
+  if(r!=='ok'){if(m){m.textContent=CAMERR[r]+' Se preferir, jogue sem câmera.';m.style.display='block';}else toast(CAMERR[r],8000);return;}
   CAM.on=true;CAM.has=false;CAM.uYaw=0;CAM.uScale=1;camTexts(true);document.body.classList.add('cam');begin();setAR(true);controls.enabled=false;camFov();
   setTimeout(()=>guide('lu','Câmera ligada','Aponte para o marcador Bit Lab impresso, em cima da mesa. Deixe a folha na parte de cima da tela. Arraste com um dedo para girar o modelo e use dois dedos para dar zoom.',9000),5200);}
 $('#startCam').onclick=beginCam;
