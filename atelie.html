@@ -2589,7 +2589,7 @@ function render(){
     }}
   if(S.ph==='paredes'&&PW.native){const n=Object.keys(PW.real).length;
     h=board(0,'Obras na parede')+artRow()+say('rastreio','Agora é <b>RA sem marcador</b>, feita pela RA do próprio celular. Escolha uma obra e toque em <b>Pendurar na parede</b>. O celular procura pontos na parede, calcula o plano dela e prende a obra ali: ela fica parada mesmo se você andar.')+
-      `<p class="fix">Se ele demorar para achar a parede, mexa o celular devagar de um lado para o outro e mire perto de uma porta, quadro, interruptor ou canto. Depois volte para o jogo.</p>`+
+      `<p class="fix">Se o visualizador abrir em <b>Objeto</b>, toque em <b>RA</b> no topo. Se ele demorar para achar a parede, mexa o celular devagar de um lado para o outro e mire perto de uma porta, quadro, interruptor ou canto. Depois toque no X e volte para o jogo.</p>`+
       `<p class="okline">${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.real[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
       arLink(PW.sel,'Pendurar na parede: '+PAINT[PW.sel].t)+
       `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+`<button class="ghost" id="inGame">Não abriu? Pendurar aqui no jogo</button>`+cardKey('wallOk');}
@@ -2616,7 +2616,7 @@ function render(){
   const nx=$('#next');if(nx)nx.onclick=next;
   const ig=$('#inGame');if(ig)ig.onclick=()=>{PW.native=false;render();};
   const fw=$('#forceWall');if(fw)fw.onclick=()=>{wallFound();toast('Parede aceita: com poucos pontos, a obra pode ficar menos firme.');};
-  panel.querySelectorAll('[data-hang]').forEach(a=>a.addEventListener('click',()=>{PW.real[a.dataset.hang]=true;setTimeout(render,400);}));
+  panel.querySelectorAll('[data-hang]').forEach(a=>a.addEventListener('click',()=>{PW.real[a.dataset.hang]=true;camPause();setTimeout(render,400);}));
   panel.querySelectorAll('[data-psu]').forEach(b=>b.onclick=()=>choosePSU(+b.dataset.psu));
   panel.querySelectorAll('[data-ob]').forEach(b=>b.onclick=()=>{PW.sel=b.dataset.ob;render();});
   const rr=$('#reram');if(rr)rr.onclick=resetRAM;
@@ -2654,7 +2654,7 @@ function setPhase(ph){drop();S.ph=ph;document.body.classList.toggle('ph-paredes'
   if(ph==='galeria'){openGallery();}
   if(ph==='mem'){if(!S.placed.ssd){const o=ITEMS.ssd.obj;o.position.set(-.5,TOP+.016,.15);o.rotation.set(0,0,0);S.placed.ssd=true;}
     setTimeout(()=>{if(S.ph==='mem'&&!AR.lightEv&&AR.place==='janela'){AR.lightEv=true;AR.lightOff=true;}},1600);}
-  if(ph==='paredes')enterWalls();else leaveWalls();
+  if(ph==='paredes')enterWalls();else{leaveWalls();if(CAM.paused)camResume();}
   if(ph==='fim')showEnd();
   render();}
 /* evento da mão: quando o primeiro pente entra */
@@ -2922,6 +2922,14 @@ const CAMERR={denied:'O celular não deu permissão para a câmera. No iPhone: A
   busy:'A câmera está ocupada por outro app. Feche chamadas de vídeo e apps de câmera e tente de novo.',
   nosupport:'Este navegador não libera a câmera. Abra o link direto no Safari (iPhone) ou no Chrome (Android), não por dentro do WhatsApp ou Instagram.',
   error:'Não consegui abrir a câmera. Recarregue a página e tente de novo.'};
+/* o visualizador de RA do celular precisa da câmera: o jogo solta a câmera antes de abrir e religa quando você volta */
+function camPause(){if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}CAM.paused=true;}
+let camResuming=false;
+async function camResume(){if(!CAM.on||!CAM.paused||camResuming||document.hidden)return;camResuming=true;const r=await camOpen();camResuming=false;
+  if(r==='ok'){CAM.paused=false;camFov();if(!AR.inside)video.style.display='block';}else toast('Toque na tela para religar a câmera.',5000);}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(camResume,600);});
+addEventListener('pageshow',()=>setTimeout(camResume,600));addEventListener('focus',()=>setTimeout(camResume,600));
+addEventListener('pointerdown',()=>{if(CAM.paused&&S.ph!=='paredes')camResume();},true);
 async function beginCam(){const b=$('#startCam'),m=$('#camMsg');b.disabled=true;b.textContent='Abrindo a câmera…';if(m)m.style.display='none';
   const r=await camOpen();b.disabled=false;b.textContent='Jogar com a câmera (AR de verdade)';
   if(r!=='ok'){if(m){m.textContent=CAMERR[r]+' Se preferir, jogue sem câmera.';m.style.display='block';}else toast(CAMERR[r],8000);return;}
