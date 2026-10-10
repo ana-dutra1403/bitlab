@@ -2523,7 +2523,12 @@ function render(){
       (vr.canGyro&&!vr.gyro?`<button class="ghost" id="gyroBtn">Usar o giroscópio do celular</button>`:'')+`<button class="ghost" id="exitGal">Voltar para a AR</button><button class="cta" id="finish">Ver o resultado</button>`;
     else h+=say('rastreio','A exposição de Monet está presa ao marcador, como o PC estava. Olhe por dentro do portal e toque nas obras. Quando quiser, atravesse o portal.')+
 `<button class="cta go" id="enterGal">Atravessar o portal</button><button class="cta" id="finish">Ver o resultado</button>`;}
-  if(S.ph==='reconhecer'){
+  if(S.ph==='reconhecer'&&CAM.on){
+    h=board(1,'Reconhecimento')+artRow()+say('camera',CAMTXT.recog)+
+      (AR.recog?cardKey('mkC'):`<p class="fix">Procurando o marcador… deixe a folha inteira na parte de cima da tela, com boa luz.</p>`)+
+      `<div class="card"><h4>E se fosse outro desenho?</h4><p><b>Borrado:</b> sem cantos nítidos, a câmera acha poucos pontos e não reconhece.</p><p><b>Xadrez:</b> todos os cantos são iguais, a AR não sabe a rotação e o objeto fica girando.</p></div>`+
+      `<button class="cta" id="next" ${AR.recog?'':'disabled'}>Próxima fase</button>`;}
+  else if(S.ph==='reconhecer'){
     h=board(1,'Reconhecimento')+artRow()+say('camera','A câmera procura cantos e contrastes na imagem: são os <b>pontos de referência</b>. Coloque um marcador na mesa e veja quantos ela encontra.')+
       `<div class="mk">${['Borrado','Xadrez','Bit Lab'].map((n,i)=>`<button class="mkc ${AR.marker===i?(i===2?'ok':'bad'):''}" data-mk="${i}"><img src="${TH[i]}" alt="">${n}</button>`).join('')}</div>`+
       (AR.marker>=0?cardKey(['mkA','mkB','mkC'][AR.marker]):'')+
@@ -2739,9 +2744,9 @@ function resetAll(){clearState();Object.assign(AR,{marker:-1,recog:false,scaleCm
   marker.material.map=texBlank;marker.material.needsUpdate=true;drawScreen('off');camFly=null;resize();ledMat.emissiveIntensity=0;bootT=-1;panel.classList.remove('min');refreshArt();updateHalos();}
 function setViewG(){}
 function setView(){if(innerWidth<760)camera.position.set(4.3,6.9,7.4);else camera.position.set(3.8,3.6,4.6);}
-function begin(){$('#startScreen').style.display='none';$('#endScreen').style.display='none';resetAll();setView();S.startTime=performance.now();setPhase('local');setTimeout(()=>guide('ar','Bem-vinda!','Oi, eu sou a Ana Roberta! Eu e as meninas vamos aparecer pela tela com dicas e curiosidades. Se travar, toque em Dica lá em cima.',8000),900);}
-const TXT0={hr:HINTS.rastrear,lo:LOSTHINT.off,fo:LOSTFIX.off};
-function camTexts(on){HINTS.rastrear=on?CAMTXT.hintR:TXT0.hr;LOSTHINT.off=on?CAMTXT.lostOff:TXT0.lo;LOSTFIX.off=on?CAMTXT.fixOff:TXT0.fo;}
+function begin(){$('#startScreen').style.display='none';$('#endScreen').style.display='none';resetAll();setView();S.startTime=performance.now();if(CAM.on){setPlace('luminaria');setPhase('reconhecer');}else setPhase('local');setTimeout(()=>guide('ar','Bem-vinda!','Oi, eu sou a Ana Roberta! Eu e as meninas vamos aparecer pela tela com dicas e curiosidades. Se travar, toque em Dica lá em cima.',8000),900);}
+const TXT0={hr:HINTS.rastrear,lo:LOSTHINT.off,fo:LOSTFIX.off,hk:HINTS.reconhecer};
+function camTexts(on){HINTS.rastrear=on?CAMTXT.hintR:TXT0.hr;HINTS.reconhecer=on?['al','Aponte para o marcador impresso com boa luz e sem reflexo. A folha inteira precisa aparecer na tela, sem dedos na frente.']:TXT0.hk;LOSTHINT.off=on?CAMTXT.lostOff:TXT0.lo;LOSTFIX.off=on?CAMTXT.fixOff:TXT0.fo;}
 $('#start3D').onclick=()=>{CAM.on=false;camTexts(false);document.body.classList.remove('cam');setAR(false);controls.enabled=true;resize();begin();};$('#again').onclick=begin;
 $('#learnBtn').onclick=()=>{const l=$('#learn');l.style.display=l.style.display==='block'?'none':'block';};
 $('#startCast').innerHTML=MEMBERS.map(m=>`<div class="cast">${memberAvatar(m,64)}<b>${m.nome}</b><small>Guia e artista</small></div>`).join('');
@@ -2763,58 +2768,74 @@ const chip=$('#arChip'),wl=$('#worldBox');
 
 /* ---------- loop ---------- */
 /* ---------- AR de verdade: câmera do celular + marcador Bit Lab impresso ---------- */
-/* Detecção: contornos quadrados (js-aruco2, licença MIT) + faixa amarela para saber a orientação.
-   Pose: algoritmo POSIT coplanar. O marcador impresso inteiro (borda preta) vale 3 unidades do jogo. */
-const CAM={on:false,seen:-1e9,cv:document.createElement('canvas'),fr:.8,pos:null,pf:0,tp:new THREE.Vector3(),tq:new THREE.Quaternion(),has:false,last:null};
+/* 1) acha quadriláteros na imagem (contornos do js-aruco2, licença MIT)
+   2) confere a borda preta e lê a grade 8x8 do marcador nas 4 rotações: só aceita o padrão Bit Lab
+   3) calcula a posição do celular pela homografia dos 4 cantos (o marcador inteiro vale 3 unidades do jogo) */
+const CAM={on:false,seen:-1e9,cv:document.createElement('canvas'),fr:.8,tp:new THREE.Vector3(),tq:new THREE.Quaternion(),has:false,last:null,found:0,lastOk:0};
 CAM.ctx=CAM.cv.getContext('2d',{willReadFrequently:true});
 const cvG=new CV.Image(),cvT=new CV.Image(),cvB=[];
-const mA=new THREE.Matrix4().set(1,0,0,0, 0,0,-1,0, 0,-1,0,0, 0,0,0,1),mD=new THREE.Matrix4().makeScale(1,1,-1);
-function qpt(q,u,v){return [(1-u)*(1-v)*q[0].x+u*(1-v)*q[1].x+u*v*q[2].x+(1-u)*v*q[3].x,(1-u)*(1-v)*q[0].y+u*(1-v)*q[1].y+u*v*q[2].y+(1-u)*v*q[3].y];}
-function sampleQ(d,w,h,q,u,v){const [x,y]=qpt(q,u,v);const xi=x|0,yi=y|0;if(xi<0||yi<0||xi>=w||yi>=h)return null;const i=(yi*w+xi)*4;return [d[i],d[i+1],d[i+2]];}
-function scoreQuad(d,w,h,c){
-  /* borda preta em volta e miolo claro */
-  let ring=0,nr=0,inner=0,ni=0;
-  for(let k=.1;k<.95;k+=.1){for(const [u,v] of [[k,.05],[k,.95],[.05,k],[.95,k]]){const s=sampleQ(d,w,h,c,u,v);if(!s)return null;ring+=(s[0]+s[1]+s[2])/3;nr++;}}
-  for(const [u,v] of [[.15,.15],[.85,.15],[.15,.72],[.85,.72],[.5,.14]]){const s=sampleQ(d,w,h,c,u,v);if(!s)return null;inner+=(s[0]+s[1]+s[2])/3;ni++;}
-  ring/=nr;inner/=ni;if(ring>inner*.62||inner-ring<45)return null;
-  /* a faixa amarela marca o lado de baixo do marcador */
-  let best=-1e9,rot=0;
-  for(let r=0;r<4;r++){const q=[c[r],c[(r+1)%4],c[(r+2)%4],c[(r+3)%4]];let y=0;
-    for(let u=.2;u<=.81;u+=.1){const s=sampleQ(d,w,h,q,u,.835);if(!s)return null;y+=(s[0]+s[1])/2-s[2];}
-    y/=7;if(y>best){best=y;rot=r;}}
-  if(best<28)return null;
-  return {q:[c[rot],c[(rot+1)%4],c[(rot+2)%4],c[(rot+3)%4]],score:best};}
+const MKBITS=(()=>{let s=3;const r=()=>{s=(s*9301+49297)%233280;return s/233280};const b=[];for(let y=0;y<8;y++)for(let x=0;x<8;x++)b.push(r()<.45?1:0);return b;})();
+const mAW=new THREE.Matrix4().set(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,0,1);
+function hsolve(A,b){const n=b.length;for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];
+  if(Math.abs(A[i][i])<1e-12)return null;for(let r=i+1;r<n;r++){const k=A[r][i]/A[i][i];for(let c=i;c<n;c++)A[r][c]-=k*A[i][c];b[r]-=k*b[i];}}
+  const x=new Array(n);for(let i=n-1;i>=0;i--){let v=b[i];for(let c=i+1;c<n;c++)v-=A[i][c]*x[c];x[i]=v/A[i][i];}return x;}
+function homog(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const [X,Y]=src[i],[x,y]=dst[i];A.push([X,Y,1,0,0,0,-x*X,-x*Y]);b.push(x);A.push([0,0,0,X,Y,1,-y*X,-y*Y]);b.push(y);}
+  const h=hsolve(A,b);return h&&[[h[0],h[1],h[2]],[h[3],h[4],h[5]],[h[6],h[7],1]];}
+const UNIT=[[0,0],[1,0],[1,1],[0,1]];
+function hp(H,u,v){const w=H[2][0]*u+H[2][1]*v+H[2][2];return [(H[0][0]*u+H[0][1]*v+H[0][2])/w,(H[1][0]*u+H[1][1]*v+H[1][2])/w];}
+function gAt(g,w,h,H,u,v){const [x,y]=hp(H,u,v);const xi=Math.round(x),yi=Math.round(y);if(xi<1||yi<1||xi>=w-1||yi>=h-1)return -1;
+  const i=yi*w+xi;return (g[i]*2+g[i-1]+g[i+1]+g[i-w]+g[i+w]+g[i-w-1]+g[i-w+1]+g[i+w-1]+g[i+w+1])/10;}
+function readMarker(g,w,h,c){
+  const H=homog(UNIT,c.map(p=>[p.x,p.y]));if(!H)return null;
+  let ring=0,nr=0,white=0,nw=0;
+  for(let k=.08;k<.95;k+=.12)for(const [u,v] of [[k,.05],[k,.95],[.05,k],[.95,k]]){const q=gAt(g,w,h,H,u,v);if(q<0)return null;ring+=q;nr++;}
+  for(const [u,v] of [[.15,.15],[.85,.15],[.15,.72],[.85,.72],[.5,.14],[.14,.5],[.86,.5]]){const q=gAt(g,w,h,H,u,v);if(q<0)return null;white+=q;nw++;}
+  ring/=nr;white/=nw;if(white-ring<25)return null;const th=(ring+white)/2;
+  let best=99,rot=0;
+  for(let r=0;r<4;r++){const q=[c[r],c[(r+1)%4],c[(r+2)%4],c[(r+3)%4]];const Hr=homog(UNIT,q.map(p=>[p.x,p.y]));if(!Hr)continue;let d=0;
+    for(let y=0;y<8&&d<=best;y++)for(let x=0;x<8;x++){const v=gAt(g,w,h,Hr,(116+40*x)/512,(116+40*y)/512);if(v<0){d=99;break;}if((v<th?1:0)!==MKBITS[y*8+x])d++;}
+    if(d<best){best=d;rot=r;}}
+  if(best>9)return null;
+  return {q:[c[rot],c[(rot+1)%4],c[(rot+2)%4],c[(rot+3)%4]],d:best};}
+function poseFromCorners(q,w,h,f){
+  const img=q.map(p=>[p.x-w/2,h/2-p.y]);const H=homog([[-1.5,1.5],[1.5,1.5],[1.5,-1.5],[-1.5,-1.5]],img);if(!H)return null;
+  const col=j=>new THREE.Vector3(H[0][j]/f,H[1][j]/f,-H[2][j]);const h1=col(0),h2=col(1),h3=col(2);
+  let l=2/(h1.length()+h2.length());if(h3.z*l>0)l=-l;
+  const a=h1.multiplyScalar(l).normalize(),b=h2.multiplyScalar(l).normalize(),t=h3.multiplyScalar(l);
+  const m=a.clone().add(b).normalize(),p=new THREE.Vector3().crossVectors(a,b).cross(m).normalize();
+  const r1=m.clone().sub(p).normalize(),r2=m.clone().add(p).normalize();
+  let R1=r1,R2=r2;if(r2.dot(a)>r1.dot(a)){R1=r2;R2=r1;}const R3=new THREE.Vector3().crossVectors(R1,R2);
+  return new THREE.Matrix4().set(R1.x,R2.x,R3.x,t.x, R1.y,R2.y,R3.y,t.y, R1.z,R2.z,R3.z,t.z, 0,0,0,1).multiply(mAW).invert();}
 function detectMarker(){
   const vw=video.videoWidth,vh=video.videoHeight;if(!vw||video.readyState<2)return null;
-  const sc=400/Math.max(vw,vh),w=Math.round(vw*sc),h=Math.round(vh*sc);
+  const sc=480/Math.max(vw,vh),w=Math.round(vw*sc),h=Math.round(vh*sc);
   if(CAM.cv.width!==w||CAM.cv.height!==h){CAM.cv.width=w;CAM.cv.height=h;}
   CAM.ctx.drawImage(video,0,0,w,h);const img=CAM.ctx.getImageData(0,0,w,h);
-  CV.grayscale(img,cvG);CV.adaptiveThreshold(cvG,cvT,2,7);
-  const cont=CV.findContours(cvT,cvB);let found=null,area=0;
-  for(const ct of cont){if(ct.length<w*.12)continue;const p=CV.approxPolyDP(ct,ct.length*.05);
-    if(p.length!==4||!CV.isContourConvex(p)||CV.minEdgeLength(p)<14)continue;
+  CV.grayscale(img,cvG);CV.adaptiveThreshold(cvG,cvT,3,6);
+  const cont=CV.findContours(cvT,cvB);let found=null,bestD=99,bestP=0;
+  for(const ct of cont){if(ct.length<w*.1)continue;const p=CV.approxPolyDP(ct,ct.length*.05);
+    if(p.length!==4||!CV.isContourConvex(p)||CV.minEdgeLength(p)<12)continue;
     const dx1=p[1].x-p[0].x,dy1=p[1].y-p[0].y,dx2=p[2].x-p[0].x,dy2=p[2].y-p[0].y;if(dx1*dy2-dy1*dx2<0){const s=p[1];p[1]=p[3];p[3]=s;}
-    const pr=CV.perimeter(p);if(pr<=area)continue;const r=scoreQuad(img.data,w,h,p);if(r){found=r.q;area=pr;}}
+    const r=readMarker(cvG.data,w,h,p);if(!r)continue;const pr=CV.perimeter(p);
+    if(r.d<bestD||(r.d===bestD&&pr>bestP)){found=r.q;bestD=r.d;bestP=pr;}}
   if(!found)return null;
-  const f=CAM.fr*Math.max(w,h);if(!CAM.pos||CAM.pf!==f){CAM.pos=new POS.Posit(3,f);CAM.pf=f;}
-  const pose=CAM.pos.pose(found.map(p=>({x:p.x-w/2,y:h/2-p.y})));
-  const mk=(R,t)=>new THREE.Matrix4().multiplyMatrices(mD,new THREE.Matrix4().set(R[0][0],R[0][1],R[0][2],t[0],R[1][0],R[1][1],R[1][2],t[1],R[2][0],R[2][1],R[2][2],t[2],0,0,0,1)).multiply(mA).invert();
-  let M=mk(pose.bestRotation,pose.bestTranslation),err=pose.bestError;
-  /* em ângulos quase de frente existem duas poses possíveis: fica com a mais parecida com a anterior */
-  if(CAM.has&&pose.alternativeError<err*1.6+1){const M2=mk(pose.alternativeRotation,pose.alternativeTranslation);
-    const p1=new THREE.Vector3().setFromMatrixPosition(M),p2=new THREE.Vector3().setFromMatrixPosition(M2);
-    if(p2.distanceTo(CAM.tp)<p1.distanceTo(CAM.tp)){M=M2;err=pose.alternativeError;}}
-  if(!(err<8))return null;
-  const p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();M.decompose(p,q,s);if(p.y<.2)return null;
+  const M=poseFromCorners(found,w,h,CAM.fr*Math.max(w,h));if(!M)return null;
+  const p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();M.decompose(p,q,s);if(p.y<.1||!isFinite(p.x))return null;
   CAM.tp.copy(p);CAM.tq.copy(q);CAM.last=found;return true;}
 function camFov(){if(!CAM.on||!video.videoWidth)return;const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(innerWidth/vw,innerHeight/vh);
   camera.fov=2*Math.atan(innerHeight/2/(CAM.fr*Math.max(vw,vh)*s))*180/PI;camera.updateProjectionMatrix();}
-video.addEventListener('loadedmetadata',camFov);
+video.addEventListener('loadedmetadata',camFov);video.addEventListener('resize',camFov);
 function camStep(){if(!CAM.on||AR.inside)return;
-  if(frameN%2===0&&detectMarker()){CAM.seen=performance.now();if(!CAM.has){camera.position.copy(CAM.tp);camera.quaternion.copy(CAM.tq);CAM.has=true;}}
-  camera.position.lerp(CAM.tp,.7);camera.quaternion.slerp(CAM.tq,.7);camera.updateMatrixWorld();}
+  if(detectMarker()){CAM.seen=performance.now();CAM.found++;
+    if(!CAM.has||performance.now()-CAM.lastOk>500){camera.position.copy(CAM.tp);camera.quaternion.copy(CAM.tq);CAM.has=true;}
+    CAM.lastOk=performance.now();}
+  /* suavização: parado fica firme, movimento rápido acompanha */
+  const dp=camera.position.distanceTo(CAM.tp),da=camera.quaternion.angleTo(CAM.tq);
+  const k=Math.min(.85,Math.max(.12,dp/.6,da/.25));
+  camera.position.lerp(CAM.tp,k);camera.quaternion.slerp(CAM.tq,k);camera.updateMatrixWorld();}
 const azNow=()=>CAM.on?Math.atan2(camera.position.x,camera.position.z):controls.getAzimuthalAngle();
 const CAMTXT={
+  recog:'Aponte a câmera para o marcador Bit Lab impresso. A câmera procura cantos e contrastes na imagem: são os <b>pontos de referência</b>.',
   rastrearSay:'A AR recalcula a posição a cada quadro. Mexa o celular de verdade: <b>dê a volta</b> no marcador (ou gire a folha), depois <b>abaixe o celular</b> até quase encostar na mesa.',
   hintR:['ar','Gire a folha ou ande em volta dela com o celular. Depois abaixe o celular até ficar quase rente à mesa.'],
   lostOff:['al','Aponte a câmera para o marcador: a folha inteira precisa aparecer na parte de cima da tela.'],
@@ -2844,13 +2865,13 @@ function loop(){
   requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;frameN++;viewOffset();
   if(camFly){camFly[2]=(camFly[2]||0)+dt;if(camFly[2]>2.6)camFly=null;}
   if(camFly){const k=Math.min(1,dt*2.2);camera.position.lerp(tv.set(...camFly[0]),k);controls.target.lerp(new THREE.Vector3(...camFly[1]),k);if(camFly&&camera.position.distanceTo(tv.set(...camFly[0]))<.06)camFly=null;}
-  if(CAM.on){camFly=null;camStep();}else controls.update();
+  if(CAM.on){camFly=null;camStep();if(S.ph==='reconhecer'&&AR.marker<0&&performance.now()-CAM.seen<300)chooseMarker(2);}else controls.update();
   /* rastreamento */
   const [ok,why]=evalTracking();
   if(AR.recog&&AR.wasTracked&&!ok&&S.ph!=='fim'){AR.losses++;}
   const changed=ok!==AR.tracked||why!==AR.why;AR.tracked=ok;AR.why=why;
   if(S.ph==='rastrear'){let d=Math.abs(azNow()-AR.az0);if(d>PI)d=2*PI-d;
-    let ch=false;if(!AR.turned&&ok&&d>.9){AR.turned=true;ch=true;}
+    let ch=false;if(!AR.turned&&ok&&d>(CAM.on?.7:.9)){AR.turned=true;ch=true;}
     if(AR.turned&&!AR.lostOnce&&!ok&&(why==='angle'||why==='off')){AR.lostOnce=true;ch=true;}
     if(AR.lostOnce&&!AR.recovered&&ok){AR.recovered=true;ch=true;}
     if(ch)render();}
