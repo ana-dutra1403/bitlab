@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bit Lab — Ateliê em AR</title>
+<title>DesmontAR — Ateliê em AR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
@@ -243,7 +243,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 <header>
   <div class="brand">
     <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="2" width="11" height="11" rx="2" fill="#3b7be0"/><circle cx="20.5" cy="7.5" r="5.5" fill="#ec6fa8"/><path d="M7.5 15 L13 25 L2 25 Z" fill="#9c2a4f"/><path d="M20.5 15 L25.5 17.9 L25.5 23.6 L20.5 26.5 L15.5 23.6 L15.5 17.9 Z" fill="#f5c518"/></svg>
-    <b>Bit Lab</b><span>Ateliê em realidade aumentada</span>
+    <b>DesmontAR</b><span>Ateliê em realidade aumentada</span>
   </div>
   <div class="dots" id="dots" aria-label="Progresso"></div>
   <button id="hintBtn" aria-label="Pedir uma dica" style="display:none">Dica</button>
@@ -261,8 +261,8 @@ input[type=range]{width:100%;accent-color:var(--board)}
 <section class="screen" id="startScreen" style="display:block">
   <div class="wrap one">
     <div>
-      <h1>Bit Lab<small>Ateliê em realidade aumentada</small></h1>
-      <p class="lead">A escola ganhou peças doadas para montar o primeiro computador, mas elas são caras e frágeis. O Ateliê Bit Lab ensaia a montagem em realidade aumentada e, com o PC ligado, leva obras de Monet para as paredes da sala.</p>
+      <h1>DesmontAR<small>Ateliê em realidade aumentada</small></h1>
+      <p class="lead">A escola ganhou peças doadas para montar o primeiro computador, mas elas são caras e frágeis. O Ateliê DesmontAR ensaia a montagem em realidade aumentada e, com o PC ligado, leva obras de Monet para as paredes da sala.</p>
       <div class="rulebox">
         <h2>Regras do jogo</h2>
         <ul class="rules">
@@ -276,7 +276,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
       </div>
       <div class="actions"><button class="cta go" id="startCam">Jogar com a câmera (AR de verdade)</button><button class="ghost" id="start3D">Jogar sem câmera (simulação)</button></div>
       <p class="camerr" id="camMsg" role="alert" style="display:none"></p>
-      <p class="note">Para jogar com a câmera, abra no celular, coloque o marcador Bit Lab impresso em cima da mesa e permita o acesso à câmera.</p>
+      <p class="note">Para jogar com a câmera, abra no celular, coloque o marcador DesmontAR impresso em cima da mesa e permita o acesso à câmera.</p>
       <h2 class="guides">As guias</h2>
       <div class="castrow" id="startCast"></div>
       <p class="note">Simplificações didáticas: com a câmera, o reconhecimento e o rastreamento do marcador e a busca de pontos na parede são de verdade. Os problemas de luz e reflexo da mesa, o cálculo do plano da parede (suposta a 1,5 m) e a fixação das obras (só pelo giroscópio) são simplificados. Sem câmera, tudo é simulado. Os números de pontos são ilustrativos.</p>
@@ -1940,7 +1940,7 @@ const table=new THREE.Mesh(new THREE.BoxGeometry(10,.14,7),std(0xffffff,0,.62,{m
 table.position.set(.6,-.07,0);table.receiveShadow=true;scene.add(table);
 const markerTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#111';g.fillRect(0,0,w,h);g.fillStyle='#f4f4f4';g.fillRect(56,56,400,400);g.fillStyle='#111';
 let s=3;const r=()=>{s=(s*9301+49297)%233280;return s/233280};for(let y=0;y<8;y++)for(let x=0;x<8;x++)if(r()<.45)g.fillRect(96+x*40,96+y*40,40,40);
-g.fillStyle='#f5c518';g.fillRect(56,410,400,46);g.fillStyle='#111';g.font='bold 34px sans-serif';g.textAlign='center';g.fillText('BIT LAB',256,446);});
+g.fillStyle='#f5c518';g.fillRect(56,410,400,46);g.fillStyle='#111';g.font='bold 34px sans-serif';g.textAlign='center';g.fillText('DESMONTAR',256,446);});
 const marker=new THREE.Mesh(new THREE.PlaneGeometry(3,3),std(0xffffff,0,.85,{map:markerTex}));
 marker.rotation.x=-PI/2;marker.position.y=.002;marker.receiveShadow=true;scene.add(marker);
 const shadowPlane=new THREE.Mesh(new THREE.PlaneGeometry(12,12),new THREE.ShadowMaterial({opacity:.45}));
@@ -2419,7 +2419,7 @@ const byId=id=>MEMBERS.find(m=>m.id===id);
 const HINTS={
   local:['lu','Pense em como a câmera enxerga o papel: luz que muda e superfícies brilhantes atrapalham o contraste.'],
   reconhecer:['al','Escolha o marcador com mais cantos diferentes entre si. Desenho repetido confunde a câmera.'],
-  escala:['gi','Meça a folha impressa! O marcador do Bit Lab tem 14 cm.'],
+  escala:['gi','Meça a folha impressa! O marcador do DesmontAR tem 14 cm.'],
   rastrear:['ar','Arraste para os lados para dar a volta na mesa. Depois arraste para cima até o celular ficar quase rente à mesa.'],
   proc:['al','A placa é S5: o processador precisa ter o mesmo soquete. Na pasta térmica, solte na faixa verde. Se a AR perder o marcador, a peça cai da sua mão.'],
   mem:['lu','A placa só aceita DDR5. Um pente em cada canal (A2 e B2) faz os dois trabalharem juntos. A placa de vídeo vai no slot mais comprido, o PCIe x16.'],
@@ -2559,7 +2559,7 @@ function render(){
       `<button class="cta" id="next" ${AR.recog?'':'disabled'}>Próxima fase</button>`;}
   else if(S.ph==='reconhecer'){
     h=board(1,'Reconhecimento')+artRow()+say('camera','A câmera procura cantos e contrastes na imagem: são os <b>pontos de referência</b>. Coloque um marcador na mesa e veja quantos ela encontra.')+
-      `<div class="mk">${['Borrado','Xadrez','Bit Lab'].map((n,i)=>`<button class="mkc ${AR.marker===i?(i===2?'ok':'bad'):''}" data-mk="${i}"><img src="${TH[i]}" alt="">${n}</button>`).join('')}</div>`+
+      `<div class="mk">${['Borrado','Xadrez','DesmontAR'].map((n,i)=>`<button class="mkc ${AR.marker===i?(i===2?'ok':'bad'):''}" data-mk="${i}"><img src="${TH[i]}" alt="">${n}</button>`).join('')}</div>`+
       (AR.marker>=0?cardKey(['mkA','mkB','mkC'][AR.marker]):'')+
       (AR.recog?`<p class="fix">A AR ainda não sabe o tamanho da folha, então está chutando a escala do PC.</p>`:'')+
       `<button class="cta" id="next" ${AR.recog?'':'disabled'}>Próxima fase</button>`;}
@@ -2807,9 +2807,9 @@ function evalTracking(){
 const chip=$('#arChip'),wl=$('#worldBox');
 
 /* ---------- loop ---------- */
-/* ---------- AR de verdade: câmera do celular + marcador Bit Lab impresso ---------- */
+/* ---------- AR de verdade: câmera do celular + marcador DesmontAR impresso ---------- */
 /* 1) acha quadriláteros na imagem (contornos do js-aruco2, licença MIT)
-   2) confere a borda preta e lê a grade 8x8 do marcador nas 4 rotações: só aceita o padrão Bit Lab
+   2) confere a borda preta e lê a grade 8x8 do marcador nas 4 rotações: só aceita o padrão DesmontAR
    3) calcula a posição do celular pela homografia dos 4 cantos (o marcador inteiro vale 3 unidades do jogo) */
 const CAM={on:false,seen:-1e9,cv:document.createElement('canvas'),fr:.8,tp:new THREE.Vector3(),tq:new THREE.Quaternion(),has:false,last:null,found:0,lastOk:0};
 CAM.ctx=CAM.cv.getContext('2d',{willReadFrequently:true});
@@ -2900,11 +2900,11 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
 const gEnd=e=>{gPts.delete(e.pointerId);gStart=null;};addEventListener('pointerup',gEnd);addEventListener('pointercancel',gEnd);
 const azNow=()=>CAM.on?Math.atan2(CAM.sp.x,CAM.sp.z):controls.getAzimuthalAngle();
 const CAMTXT={
-  recog:'Aponte a câmera para o marcador Bit Lab impresso. A câmera procura cantos e contrastes na imagem: são os <b>pontos de referência</b>.',
+  recog:'Aponte a câmera para o marcador DesmontAR impresso. A câmera procura cantos e contrastes na imagem: são os <b>pontos de referência</b>.',
   rastrearSay:'A AR recalcula a posição a cada quadro. Mexa o celular de verdade: <b>dê a volta</b> no marcador (ou gire a folha), depois <b>abaixe o celular</b> até quase encostar na mesa.',
   hintR:['ar','Gire a folha ou ande em volta dela com o celular. Depois abaixe o celular até ficar quase rente à mesa.'],
   lostOff:['al','Aponte a câmera para o marcador: a folha inteira precisa aparecer na parte de cima da tela.'],
-  fixOff:'Aponte a câmera para o marcador Bit Lab, com a folha inteira aparecendo na parte de cima da tela.'};
+  fixOff:'Aponte a câmera para o marcador DesmontAR, com a folha inteira aparecendo na parte de cima da tela.'};
 /* abre a câmera com prazo: se o celular não responder, avisa em vez de ficar carregando para sempre */
 const withT=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
 async function camOpen(){
@@ -2934,7 +2934,7 @@ async function beginCam(){const b=$('#startCam'),m=$('#camMsg');b.disabled=true;
   const r=await camOpen();b.disabled=false;b.textContent='Jogar com a câmera (AR de verdade)';
   if(r!=='ok'){if(m){m.textContent=CAMERR[r]+' Se preferir, jogue sem câmera.';m.style.display='block';}else toast(CAMERR[r],8000);return;}
   CAM.on=true;CAM.has=false;CAM.uYaw=0;CAM.uScale=1;camTexts(true);document.body.classList.add('cam');begin();setAR(true);controls.enabled=false;camFov();
-  setTimeout(()=>guide('lu','Câmera ligada','Aponte para o marcador Bit Lab impresso, em cima da mesa. Deixe a folha na parte de cima da tela. Arraste com um dedo para girar o modelo e use dois dedos para dar zoom.',9000),5200);}
+  setTimeout(()=>guide('lu','Câmera ligada','Aponte para o marcador DesmontAR impresso, em cima da mesa. Deixe a folha na parte de cima da tela. Arraste com um dedo para girar o modelo e use dois dedos para dar zoom.',9000),5200);}
 $('#startCam').onclick=beginCam;
 
 /* ---------- obras na parede: AR sem marcador ---------- */
