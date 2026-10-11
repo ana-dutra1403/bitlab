@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DesmontAR — Ateliê em AR</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icone.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
@@ -109,6 +111,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 /* telas cheias */
 .screen{position:fixed;inset:0;z-index:8;display:none;overflow:auto;background:radial-gradient(ellipse at 30% 20%,#243142,var(--asphalt) 70%);padding:calc(env(safe-area-inset-top,0px) + 24px) 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
 .screen .wrap{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center;min-height:100%}
+.startLogo{display:block;width:clamp(72px,16vw,104px);height:auto;margin:0 0 14px}
 .screen h1{font-family:var(--display);font-size:clamp(40px,7vw,72px);line-height:.95;margin:0 0 12px;letter-spacing:-.01em}
 .screen h1 small{display:block;font-size:.38em;color:var(--board);letter-spacing:.02em;margin-top:10px}
 .screen p{color:#cdd6e2;max-width:48ch}
@@ -242,7 +245,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 <div id="qr" hidden></div>
 <header>
   <div class="brand">
-    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="2" width="11" height="11" rx="2" fill="#3b7be0"/><circle cx="20.5" cy="7.5" r="5.5" fill="#ec6fa8"/><path d="M7.5 15 L13 25 L2 25 Z" fill="#9c2a4f"/><path d="M20.5 15 L25.5 17.9 L25.5 23.6 L20.5 26.5 L15.5 23.6 L15.5 17.9 Z" fill="#f5c518"/></svg>
+    <img src="logo.png" alt="" width="30" height="30" style="display:block">
     <b>DesmontAR</b><span>Ateliê em realidade aumentada</span>
   </div>
   <div class="dots" id="dots" aria-label="Progresso"></div>
@@ -261,6 +264,7 @@ input[type=range]{width:100%;accent-color:var(--board)}
 <section class="screen" id="startScreen" style="display:block">
   <div class="wrap one">
     <div>
+      <img class="startLogo" src="logo.png" alt="Logo do DesmontAR: três camadas azuis empilhadas" width="96" height="96">
       <h1>DesmontAR<small>Ateliê em realidade aumentada</small></h1>
       <p class="lead">A escola ganhou peças doadas para montar o primeiro computador, mas elas são caras e frágeis. O Ateliê DesmontAR ensaia a montagem em realidade aumentada e, com o PC ligado, leva obras de Monet para as paredes da sala.</p>
       <div class="rulebox">
