@@ -1938,9 +1938,9 @@ function label(text,color='#f5c518'){const t=textTex(512,128,(g,w,h)=>{g.fillSty
 /* ---------- mesa e marcador ---------- */
 const table=new THREE.Mesh(new THREE.BoxGeometry(10,.14,7),std(0xffffff,0,.62,{map:woodTex}));
 table.position.set(.6,-.07,0);table.receiveShadow=true;scene.add(table);
-const markerTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#111';g.fillRect(0,0,w,h);g.fillStyle='#f4f4f4';g.fillRect(56,56,400,400);g.fillStyle='#111';
+const markerTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#3a3c40';g.fillRect(0,0,w,h);g.fillStyle='#f4f5f7';g.fillRect(56,56,400,400);g.fillStyle='#3a3c40';
 let s=3;const r=()=>{s=(s*9301+49297)%233280;return s/233280};for(let y=0;y<8;y++)for(let x=0;x<8;x++)if(r()<.45)g.fillRect(96+x*40,96+y*40,40,40);
-g.fillStyle='#f5c518';g.fillRect(56,410,400,46);g.fillStyle='#111';g.font='bold 34px sans-serif';g.textAlign='center';g.fillText('DESMONTAR',256,446);});
+g.fillStyle='#a9c1e1';g.fillRect(56,410,400,46);g.fillStyle='#3a3c40';g.font='800 34px Inter, sans-serif';g.textAlign='center';g.fillText('DESMONTAR',256,446);});
 const marker=new THREE.Mesh(new THREE.PlaneGeometry(3,3),std(0xffffff,0,.85,{map:markerTex}));
 marker.rotation.x=-PI/2;marker.position.y=.002;marker.receiveShadow=true;scene.add(marker);
 const shadowPlane=new THREE.Mesh(new THREE.PlaneGeometry(12,12),new THREE.ShadowMaterial({opacity:.45}));
