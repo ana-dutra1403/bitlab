@@ -606,11 +606,11 @@ function pickEdge(){const E=['left','right','top','bottom'].filter(e=>e!==lastEd
 function guide(id,title,text,ms){const m=byId(id);const g=$('#guide');$('#peek').style.display='none';
   g.innerHTML=`${memberAvatar(m,58)}<div class="gb"><b>${m.nome}</b><small>${title}</small><p>${text}</p></div><button class="gx" aria-label="Fechar">×</button>`;
   g.style.display='flex';const edge=pickEdge();g.classList.toggle('rev',edge==='right');edgePos(g,edge);slideIn(g,edge);
-  g.querySelector('.gx').onclick=()=>slideOut(g);clearTimeout(gT);if(ms)gT=setTimeout(()=>slideOut(g),ms);}
+  g.querySelector('.gx').onclick=()=>slideOut(g);clearTimeout(gT);if(ms)gT=setTimeout(()=>slideOut(g),Math.max(ms*1.6,9000));}
 /* de tempos em tempos uma guia espia de uma borda da tela oferecendo ajuda */
 function peek(){if(S.ph==='inicio'||S.ph==='fim'||$('#guide').style.display==='flex')return;const h=(!AR.tracked&&AR.recog&&LOSTHINT[AR.why])||HINTS[S.ph];if(!h)return;
   const m=byId(h[0]),p=$('#peek');p.innerHTML=`${memberAvatar(m,54)}<span>Precisa de uma dica?</span>`;p.style.display='flex';const edge=pickEdge();p.classList.toggle('rev',edge==='right');edgePos(p,edge);slideIn(p,edge);
-  p.onclick=()=>{p.style.display='none';askHint();};clearTimeout(peek.t);peek.t=setTimeout(()=>slideOut(p),5000);}
+  p.onclick=()=>{p.style.display='none';askHint();};clearTimeout(peek.t);peek.t=setTimeout(()=>slideOut(p),8000);}
 /* a dica só aparece quando a jogadora fica parada um tempo, para não cobrir a tela do celular à toa */
 let lastAct=performance.now(),lastPeek=0;addEventListener('pointerdown',()=>{lastAct=performance.now();},true);
 setInterval(()=>{const n=performance.now();if(n-lastAct>20000&&n-lastPeek>40000){lastPeek=n;peek();}},4000);
@@ -682,7 +682,7 @@ const LOSTFIX={glare:'Leve o marcador para a mesa com luminária: luz constante 
 
 /* ---------- painel ---------- */
 const panel=$('#panel');
-function toast(t,ms=3200){const el=$('#toast');el.textContent=t;el.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>el.style.display='none',ms);}
+function toast(t,ms=5500){ms=Math.max(ms,5500);const el=$('#toast');el.textContent=t;el.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>el.style.display='none',ms);}
 function dots(){const i=PH.indexOf(S.ph);$('#dots').innerHTML=PHN.map((s,k)=>`<i class="${k<i?'done':k===i?'on':''}" title="${s}"></i>`).join('');}
 function board(n,title){n=PH.indexOf(S.ph);return `<div class="board" id="boardHead" role="button" aria-label="Recolher ou expandir o painel"><span class="n">${n}</span><h2>${title}</h2><span class="car">▾</span></div>`;}
 function cardKey(k){if(!k)return '';const [tone,a,b,c,lab]=CARDS[k];
@@ -691,6 +691,8 @@ function checklist(items){return `<ul class="check">${items.map(([t,done,cur])=>
 function pickBtn(id,label){return `<button class="ghost" data-pick="${id}">${S.sel===id?'Segurando: toque na área amarela':label}</button>`;}
 function bar(label,val,color){return `<div class="bar"><div class="l"><span>${label}</span><span>${val}%</span></div><div class="t"><div class="f" style="width:${val}%;background:${color}"></div></div></div>`;}
 function artRow(){const n=AR.art.filter(Boolean).length;return `<div class="artrow"><img src="${artThumb}" alt="Obra da exposição, ${n} de 4 partes"><span>Obra da exposição<br><b>${n} de 4 partes</b></span></div>`;}
+const LOST_DELAY=1500;
+function lostUI(){return !AR.tracked&&AR.lostT>0&&performance.now()-AR.lostT>LOST_DELAY;}
 function lostBox(){if(AR.tracked||STEPOF[S.ph]<2||S.ph==='fim')return '';const k=AR.why;
   const key=k==='glare'?'glare':k==='light'?'light':k==='angle'?'trLost':'trOff';
   return say('rastreio','A AR perdeu o marcador! Sem vê-lo, ela não sabe onde desenhar o PC.')+cardKey(key)+
@@ -703,7 +705,7 @@ function render(){
       `<div class="places">${[['janela','Mesa perto da janela','O sol entra e sai'],['vidro','Mesa de vidro','Superfície brilhante'],['luminaria','Mesa com luminária','Luz constante e fosca']].map(([k,t,d])=>`<button class="plc ${P===k?(k==='luminaria'?'ok':'sel'):''}" data-place="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>`+
       (P?cardKey(P==='luminaria'?'plGood':'plRisk'):'')+`<button class="cta" id="next" ${P?'':'disabled'}>Colocar o marcador</button>`;}
   if(S.ph==='galeria'){h=board(0,AR.inside?'Galeria 360° · RV':'Portal da galeria')+(AR.inside?'':artRow());
-    if(!AR.tracked)h+=lostBox();
+    if(lostUI())h+=lostBox();
     else if(AR.inside)h+=`<div class="nomob">`+say('camera','Bem-vinda à exposição de Monet! Gire o celular ou arraste a tela para olhar em volta e toque nas obras.')+`</div>`+
 
       (vr.canGyro&&!vr.gyro?`<button class="ghost" id="gyroBtn">Usar o giroscópio do celular</button>`:'')+`<button class="ghost" id="exitGal">Sair da RV e voltar para a RA</button><button class="cta" id="finish">Ver o resultado</button>`;
@@ -723,7 +725,7 @@ function render(){
   if(S.ph==='escala'){const v=AR.scaleCm;
     h=board(2,'Escala')+artRow()+say('escala','A AR já sabe <b>onde</b> a folha está, mas não o <b>tamanho</b> dela. Quanto mede o marcador impresso?')+
       `<div class="vals">${[5,50,14].map(n=>`<button class="val ${v===n?(n===14?'ok':'bad'):''}" data-cm="${n}">${n} cm</button>`).join('')}</div>`+
-      (v?cardKey('sc'+v):'')+(!AR.tracked?lostBox():'')+`<button class="cta" id="next" ${v===14?'':'disabled'}>Próxima fase</button>`;}
+      (v?cardKey('sc'+v):'')+(lostUI()?lostBox():'')+`<button class="cta" id="next" ${v===14?'':'disabled'}>Próxima fase</button>`;}
   if(S.ph==='rastrear'){
     h=board(3,'Rastreamento')+artRow()+say('rastreio',CAM.on?CAMTXT.rastrearSay:'A AR recalcula a posição a cada quadro. Arraste o dedo para mover o celular: <b>para os lados</b> dá a volta na mesa, <b>para cima</b> abaixa o celular e <b>para baixo</b> levanta.')+
       checklist([['Dar a volta na mesa',AR.turned,true],['Abaixar o celular até eu perder o marcador',AR.lostOnce,AR.turned],['Voltar a enquadrar o marcador',AR.recovered,AR.lostOnce]])+
@@ -731,7 +733,7 @@ function render(){
       `<button class="cta" id="next" ${AR.recovered&&AR.tracked?'':'disabled'}>Começar a montagem</button>`;}
   if(st>=2&&st<=3){const titles={2:'Processador',3:'Memória e vídeo'};
     h=board(st+2,titles[st])+artRow();
-    if(!AR.tracked)h+=lostBox();
+    if(lostUI())h+=lostBox();
     else{
       if(st===2){h+=cardKey(S.card)+checklist([['Escolher e encaixar o processador',S.placed.cpu,true],['Aplicar a pasta térmica',S.paste,S.placed.cpu],['Instalar o cooler',S.placed.cooler,S.paste]]);
         if(!S.placed.cpu)h+=`<p>A placa-mãe usa soquete <b>S5</b>. Toque em um processador e depois no soquete.</p>`+pickBtn('cpuS4','Pegar o processador S4')+pickBtn('cpu','Pegar o processador S5')+pickBtn('cpuNB','Pegar o processador de notebook');
@@ -747,19 +749,19 @@ function render(){
   if(S.ph==='paredes'&&PW.native){const n=Object.keys(PW.real).length;
     h=board(0,'Obras na parede')+artRow()+say('rastreio','Agora é <b>RA sem marcador</b>, feita pela RA do próprio celular. Escolha uma obra e toque em <b>Pendurar na parede</b>. O celular procura pontos na parede, calcula o plano dela e prende a obra ali: ela fica parada mesmo se você andar.')+
       `<p class="fix">Se o visualizador abrir em <b>Objeto</b>, toque em <b>RA</b> no topo. Se ele demorar para achar a parede, mexa o celular devagar de um lado para o outro e mire perto de uma porta, quadro, interruptor ou canto. Depois toque no X e volte para o jogo.</p>`+
-      `<p class="okline">${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.real[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
+      `<p class="okline">${n} ${n===1?'obra pendurada':'obras penduradas'} · pendure quantas quiser</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.real[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
       arLink(PW.sel,'Pendurar na parede: '+PAINT[PW.sel].t)+
-      `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+`<button class="ghost" id="inGame">Não abriu? Pendurar aqui no jogo</button>`+cardKey('wallOk');}
+      `<p class="fix"><b>Terminou?</b> Toque no botão abaixo e depois <b>volte para a mesa e aponte a câmera para o marcador</b>. O portal da galeria vai aparecer em cima dele.</p>`+`<button class="cta" id="next" ${n>=1?'':'disabled'}>${n>=1?'Abrir o portal da galeria':'Pendure pelo menos 1 obra'}</button>`+`<button class="ghost" id="inGame">Não abriu? Pendurar aqui no jogo</button>`+cardKey('wallOk');}
   else if(S.ph==='paredes'){h=board(0,'Obras na parede')+artRow();
     if(!PW.found){const pc=Math.min(100,Math.round(PW.score/WALL_N*100));
       h+=say('rastreio',CAM.on?'Agora <b>sem marcador</b>! Fique a uns <b>1,5 m</b> de uma parede, segure o celular em pé e aponte para ela. A câmera procura pontos de referência na própria parede.':'Agora <b>sem marcador</b>! Arraste para olhar a sala e mire o círculo do centro numa parede. A câmera procura pontos de referência na própria parede.')+
         bar('Pontos de referência na parede',pc,pc>=100?'var(--ok)':pc>35?'var(--board)':'var(--bad)')+(PW.failSeen?cardKey('wallFail')+`<p class="fix">Mire perto de uma porta, quadro, interruptor ou canto e mexa o celular devagar.</p><button class="ghost" id="forceWall">Usar esta parede mesmo assim</button>`:'');}
     else{const n=Object.keys(PW.placed).length;
-      h+=`<p class="okline">Parede encontrada · ${n}/3 obras penduradas</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.placed[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
+      h+=`<p class="okline">Parede encontrada · ${n} ${n===1?'obra pendurada':'obras penduradas'}</p><div class="obsel">${OBK.map(k=>`<button class="ob ${PW.sel===k?'sel':''} ${PW.placed[k]?'done':''}" data-ob="${k}"><img src="${thumbURL(k)}" alt=""><span>${PAINT[k].t}</span><small>${dimTxt(k)}</small></button>`).join('')}</div>`+
         (CAM.on?`<p>Mire o círculo num espaço livre da parede e toque na tela para pendurar <b>${PAINT[PW.sel].t}</b>.</p>`:`<p>Toque na parede para pendurar <b>${PAINT[PW.sel].t}</b> no tamanho real.</p>`)+
-        `<button class="cta" id="next" ${n>=3?'':'disabled'}>Abrir o portal da galeria (${Math.min(n,3)}/3 obras)</button>`+cardKey('wallOk');}}
+        `<p class="fix"><b>Terminou?</b> Toque no botão abaixo e depois <b>volte para a mesa e aponte a câmera para o marcador</b>. O portal da galeria vai aparecer em cima dele.</p>`+`<button class="cta" id="next" ${n>=1?'':'disabled'}>${n>=1?'Abrir o portal da galeria':'Pendure pelo menos 1 obra'}</button>`+cardKey('wallOk');}}
   if(S.ph==='ligar'){h=board(8,'Ligar o computador')+artRow();
-    if(!AR.tracked)h+=lostBox();
+    if(lostUI())h+=lostBox();
     else if(!S.psu)h+=cardKey(S.card)+say('marcador','Falta a fonte, que leva a energia para todas as peças. Some o consumo e escolha uma.')+`<table class="qtable"><tr><td>Processador</td><td>125 W</td></tr><tr><td>Placa de vídeo</td><td>220 W</td></tr><tr><td>Demais peças</td><td>75 W</td></tr><tr><td>Total</td><td>420 W</td></tr></table>`+[350,650,1600].map(w=>`<button class="ghost" data-psu="${w}">Fonte de ${w} W</button>`).join('');
     else if(!S.caseOn)h+=(S.card?cardKey(S.card):'')+say('marcador','Tudo montado sobre o marcador. Feche o gabinete e ligue o computador da exposição.')+`<button class="cta" id="closeCase">Fechar o gabinete</button>`;
     else if(!S.on)h+=`<button class="cta go" id="power">Ligar o PC</button>`;
@@ -870,7 +872,7 @@ function buildGallery(){if(galBuilt)return;galBuilt=true;
   const title=canvasTex(1024,160,(g,w,h)=>{g.fillStyle='#22252b';g.fillRect(0,0,w,h);g.fillStyle='#f5c518';g.font='700 84px "Chakra Petch", sans-serif';g.textAlign='center';g.fillText('Galeria Monet',w/2,110);});
   A(new THREE.PlaneGeometry(1.4,.22),new THREE.MeshBasicMaterial({map:title,toneMapped:false}),[0,2.16,0]);
   galG.traverse(o=>{o.layers.set(1);if(o.isMesh){o.castShadow=false;o.receiveShadow=true;}});}
-function openGallery(){buildGallery();caseG.visible=true;S.galT=0;galG.scale.setScalar(.001);AR.obra=null;toast('O portal da galeria se abriu sobre o marcador.');setTimeout(()=>guide('gi','Você sabia?','O Google Arts & Culture tem galerias inteiras que você visita pelo celular, com as obras em alta resolução.',7000),1500);
+function openGallery(){buildGallery();caseG.visible=true;S.galT=0;galG.scale.setScalar(.001);AR.obra=null;setTimeout(()=>guide('gi','Volte para o marcador',CAM.on?'Agora volte para a mesa e aponte a câmera para o marcador impresso. O portal da galeria vai aparecer em cima dele.':'Agora volte para a mesa com o marcador. O portal da galeria apareceu em cima dele.',12000),600);
   camFly=innerWidth<760?[[.4,4.6,6.4],[0,-.2,.4]]:[[.6,3.0,4.6],[0,.45,-.2]];}
 /* ---------- galeria 360° (realidade virtual) ---------- */
 const vr={scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(72,1,.05,80),yaw:0,pitch:0,gyro:false,a0:null,canGyro:('DeviceOrientationEvent' in window)&&matchMedia('(pointer:coarse)').matches,built:false};
@@ -941,7 +943,7 @@ function resetAll(){clearState();Object.assign(AR,{marker:-1,recog:false,scaleCm
   marker.material.map=texBlank;marker.material.needsUpdate=true;drawScreen('off');camFly=null;resize();ledMat.emissiveIntensity=0;bootT=-1;panel.classList.remove('min');refreshArt();updateHalos();}
 function setViewG(){}
 function setView(){if(innerWidth<760)camera.position.set(4.3,6.9,7.4);else camera.position.set(3.8,3.6,4.6);}
-function begin(){$('#startScreen').style.display='none';$('#endScreen').style.display='none';resetAll();setView();S.startTime=performance.now();if(CAM.on){setPlace('luminaria');setPhase('reconhecer');}else setPhase('local');setTimeout(()=>guide('ar','Bem-vinda!','Oi, eu sou a Ana Roberta! As peças doadas são caras e frágeis, então vamos ensaiar a montagem em realidade aumentada. Eu e as meninas aparecemos pela tela com dicas. Se travar, toque em Dica.',8000),900);}
+function begin(){$('#startScreen').style.display='none';$('#endScreen').style.display='none';resetAll();AR.backTold=false;AR.lostT=0;AR.lostShown=false;AR.tracked0=undefined;setView();S.startTime=performance.now();if(CAM.on){setPlace('luminaria');setPhase('reconhecer');}else setPhase('local');setTimeout(()=>guide('ar','Bem-vinda!','Oi, eu sou a Ana Roberta! As peças doadas são caras e frágeis, então vamos ensaiar a montagem em realidade aumentada. Eu e as meninas aparecemos pela tela com dicas. Se travar, toque em Dica.',8000),900);}
 const TXT0={hr:HINTS.rastrear,lo:LOSTHINT.off,fo:LOSTFIX.off,hk:HINTS.reconhecer};
 function camTexts(on){HINTS.rastrear=on?CAMTXT.hintR:TXT0.hr;HINTS.reconhecer=on?['al','Aponte para o marcador impresso com boa luz e sem reflexo. A folha inteira precisa aparecer na tela, sem dedos na frente.']:TXT0.hk;LOSTHINT.off=on?CAMTXT.lostOff:TXT0.lo;LOSTFIX.off=on?CAMTXT.fixOff:TXT0.fo;}
 $('#start3D').onclick=()=>{CAM.on=false;camTexts(false);document.body.classList.remove('cam');setAR(false);controls.enabled=true;resize();begin();};$('#again').onclick=begin;
@@ -1253,7 +1255,13 @@ function loop(){
     if(AR.turned&&!AR.lostOnce&&!ok&&(why==='angle'||why==='off')){AR.lostOnce=true;ch=true;}
     if(AR.lostOnce&&!AR.recovered&&ok){AR.recovered=true;ch=true;}
     if(ch)render();}
-  if(changed){if(!ok)drop();else if(AR.losses>0&&STEPOF[S.ph]>=1&&!AR.inside&&AR.recog)guide(['ar','al','lu','gi'][AR.losses%4],'Voltou!','Voltei a ver o marcador, então o objeto voltou para o mesmo lugar.',3500);render();hintFace();}
+  if(changed&&ok!==AR.tracked0){if(!ok){drop();AR.lostT=performance.now();AR.lostShown=false;}
+    else{/* "Voltou!" só uma vez por partida, e só se o marcador ficou um bom tempo fora */
+      if(AR.lostShown&&!AR.backTold&&STEPOF[S.ph]>=1&&!AR.inside&&AR.recog){AR.backTold=true;guide('ar','Voltou!','Voltei a ver o marcador, então o objeto voltou para o mesmo lugar.',6000);}
+      AR.lostT=0;AR.lostShown=false;}}
+  AR.tracked0=ok;
+  if(!ok&&AR.lostT&&!AR.lostShown&&performance.now()-AR.lostT>LOST_DELAY){AR.lostShown=true;render();}
+  if(changed){render();hintFace();}
   AR.wasTracked=ok;
   /* PC só aparece quando a AR está rastreando */
   rig.visible=ok&&S.ph!=='galeria'&&S.ph!=='paredes';galG.visible=ok&&S.ph==='galeria';
